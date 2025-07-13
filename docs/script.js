@@ -632,7 +632,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
             this.board = JSON.parse(JSON.stringify(gameState.board));
         }
         if (gameState.currentPlayer) {
-            this.currentPlayer = gameState.currentPlayer;
+        this.currentPlayer = gameState.currentPlayer;
         }
         if (gameState.moveHistory) {
             this.moveHistory = JSON.parse(JSON.stringify(gameState.moveHistory));
@@ -675,7 +675,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
             if (this.puzzleMode) {
                 if (this.puzzleAITurn) {
                     statusText = 'AI가 생각 중...';
-        } else {
+                } else {
                     statusText = '당신의 차례';
                 }
             } else if (this.gameMode === 'online-player') {
@@ -726,11 +726,11 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         
         // AI 대전 모드면 항상 플레이어가 흰색, AI가 검은색
         if (this.gameMode === 'ai') {
-            this.currentPlayer = 'white';
+        this.currentPlayer = 'white';
             this.playerColor = 'white';
             console.log('AI 모드 설정: 플레이어=white, AI=black');
         } else {
-            this.currentPlayer = 'white';
+        this.currentPlayer = 'white';
         }
         this.selectedPiece = null;
         this.moveHistory = [];
@@ -752,7 +752,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         this.board[lastMove.from.row][lastMove.from.col] = lastMove.piece;
         this.board[lastMove.to.row][lastMove.to.col] = lastMove.captured || '';
         
-            this.currentPlayer = this.currentPlayer === 'white' ? 'black' : 'white';
+        this.currentPlayer = this.currentPlayer === 'white' ? 'black' : 'white';
         this.clearSelection();
         this.renderBoard();
         this.updateGameStatus();
@@ -874,7 +874,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         // AI 대전 모드일 때 플레이어는 항상 흰색, AI는 검은색
         if (mode === 'ai') {
             this.playerColor = 'white';
-            this.currentPlayer = 'white'; // 게임 리셋 시에도 반영
+        this.currentPlayer = 'white'; // 게임 리셋 시에도 반영
         }
         
         // 패널 표시/숨김
@@ -4419,7 +4419,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
             this.currentPuzzle = puzzleList[randomIndex];
             
             this.board = JSON.parse(JSON.stringify(this.currentPuzzle.board));
-            this.currentPlayer = 'white';
+        this.currentPlayer = 'white';
             this.puzzleMode = true;
             this.puzzleSolved = false;
             this.puzzleAITurn = false; // AI 턴 플래그
@@ -4441,7 +4441,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 ['', '', '', '', '', '', '', ''],
                 ['♔', '', '', '', '', '', '', '♚']
             ];
-            this.currentPlayer = 'white';
+        this.currentPlayer = 'white';
             this.puzzleMode = true;
             this.puzzleSolved = false;
             this.puzzleAITurn = false;
