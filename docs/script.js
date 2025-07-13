@@ -607,7 +607,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
             special: specialType
         });
         
-            this.currentPlayer = this.currentPlayer === 'white' ? 'black' : 'white';
+        this.currentPlayer = this.currentPlayer === 'white' ? 'black' : 'white';
         
         // 선택 해제 및 하이라이트 제거
         this.selectedPiece = null;
@@ -752,7 +752,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         this.board[lastMove.from.row][lastMove.from.col] = lastMove.piece;
         this.board[lastMove.to.row][lastMove.to.col] = lastMove.captured || '';
         
-            this.currentPlayer = this.currentPlayer === 'white' ? 'black' : 'white';
+        this.currentPlayer = this.currentPlayer === 'white' ? 'black' : 'white';
         this.clearSelection();
         this.renderBoard();
         this.updateGameStatus();
