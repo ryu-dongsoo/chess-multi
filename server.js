@@ -17,7 +17,7 @@ const server = http.createServer((req, res) => {
     }
     
     // 정적 파일 제공
-    let filePath = req.url === '/' ? '/index.html' : req.url;
+    let filePath = req.url === '/' ? '/docs/index.html' : req.url;
     filePath = path.join(__dirname, filePath);
     
     // 파일 확장자에 따른 Content-Type 설정
