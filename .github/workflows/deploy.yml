@@ -1,0 +1,76 @@
+name: Deploy Chess Game
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./frontend
+          destination_dir: ./
+
+  deploy-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm install
+
+      - name: Deploy to Render
+        run: |
+          # Render webhook URL이 설정된 경우에만 실행
+          if [ -n "${{ secrets.RENDER_WEBHOOK }}" ]; then
+            curl -X POST ${{ secrets.RENDER_WEBHOOK }}
+          fi
+        env:
+          RENDER_WEBHOOK: ${{ secrets.RENDER_WEBHOOK }}
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          npm install
+          cd backend && npm install
+
+      - name: Run tests
+        run: |
+          # 간단한 테스트 실행
+          node -e "console.log('Node.js version:', process.version)"
+          cd backend && node -e "console.log('Backend dependencies installed successfully')" 

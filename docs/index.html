@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>체스 게임</title>
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♔</text></svg>">
+    <link rel="stylesheet" href="style.css">
+    <!-- Leela Chess Zero AI 엔진 (Stockfish 대체) -->
+    <script src="https://cdn.jsdelivr.net/npm/lc0@0.28.0/lc0.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>♔ 체스 게임 ♚</h1>
+            <div class="game-info">
+                <span class="status" id="status">로컬 2인 게임</span>
+                <span class="timer" id="timer">무제한</span>
+            </div>
+        </header>
+
+        <main>
+            <div class="game-area">
+                <div class="board-container">
+                    <div class="coordinates coordinates-top">
+                        <span>a</span><span>b</span><span>c</span><span>d</span><span>e</span><span>f</span><span>g</span><span>h</span>
+                    </div>
+                    <div class="board-wrapper">
+                        <div class="coordinates coordinates-left">
+                            <span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
+                        </div>
+                        <div class="chessboard" id="chessboard"></div>
+                        <div class="coordinates coordinates-right">
+                            <span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
+                        </div>
+                    </div>
+                    <div class="coordinates coordinates-bottom">
+                        <span>a</span><span>b</span><span>c</span><span>d</span><span>e</span><span>f</span><span>g</span><span>h</span>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <div class="game-modes">
+                        <button class="btn" id="local-btn">로컬 2인</button>
+                        <button class="btn" id="ai-btn">AI 대전</button>
+                        <button class="btn" id="online-btn">온라인 플레이</button>
+                        <button class="btn" id="puzzle-btn">퍼즐</button>
+                        <button class="btn" id="tactics-btn">전술</button>
+                    </div>
+                    
+                    <div class="puzzle-info-main" id="puzzle-info-main" style="display: none;"></div>
+
+                    <div class="online-panel" id="online-panel" style="display: none;">
+                        <div class="input-group">
+                            <input type="text" id="player-name" placeholder="플레이어 이름" value="Player">
+                            <input type="text" id="room-id" placeholder="방 ID (비워두면 자동 매칭)">
+                        </div>
+                        <div class="online-buttons">
+                            <button class="btn" id="create-room-btn">방 만들기</button>
+                            <button class="btn" id="join-room-btn">방 참여</button>
+                            <button class="btn" id="random-match-btn">랜덤 매칭</button>
+                        </div>
+                        <div class="connection-status">
+                            <span id="connection-status">연결 안됨</span>
+                        </div>
+                    </div>
+
+                    <div class="ai-panel" id="ai-panel" style="display: none;">
+                        <div class="difficulty-buttons">
+                            <button class="btn" data-difficulty="easy">쉬움</button>
+                            <button class="btn" data-difficulty="medium">보통</button>
+                            <button class="btn" data-difficulty="hard">어려움</button>
+                            <button class="btn" data-difficulty="expert">전문가</button>
+                            <button class="btn" data-difficulty="stockfish">Stockfish</button>
+                        </div>
+                        <div class="ai-controls">
+                            <button class="btn" id="train-ai-btn">AI 학습</button>
+                            <button class="btn" id="analyze-btn">AI 분석</button>
+                        </div>
+                    </div>
+
+                    <div class="puzzle-panel" id="puzzle-panel" style="display: none;">
+                        <div class="puzzle-info">
+                            <h3 id="puzzle-title">퍼즐 제목</h3>
+                            <p id="puzzle-description">퍼즐 설명</p>
+                        </div>
+                        <div class="puzzle-controls">
+                            <button class="btn" id="hint-btn">힌트</button>
+                            <button class="btn" id="solution-btn">해답</button>
+                            <button class="btn" id="ai-help-btn">AI 도움</button>
+                            <button class="btn" id="next-puzzle-btn">다음 퍼즐</button>
+                        </div>
+                    </div>
+
+                    <div class="tactics-panel" id="tactics-panel" style="display: none;">
+                        <div class="tactics-buttons">
+                            <button class="btn" data-tactic="fork">포크</button>
+                            <button class="btn" data-tactic="pin">핀</button>
+                            <button class="btn" data-tactic="skewer">스큐어</button>
+                            <button class="btn" data-tactic="discovered">발견 공격</button>
+                            <button class="btn" data-tactic="all">모든 전술</button>
+                        </div>
+                        <div class="tactics-controls">
+                            <button class="btn" id="tactic-practice-btn">전술 연습</button>
+                        </div>
+                    </div>
+
+                    <div class="game-controls">
+                        <button class="btn" id="reset-btn">새 게임</button>
+                        <button class="btn" id="undo-btn">무르기</button>
+                    </div>
+
+                    <div class="time-controls">
+                        <button class="btn" data-time="none">무제한</button>
+                        <button class="btn" data-time="blitz">블리츠 (5분)</button>
+                        <button class="btn" data-time="rapid">래피드 (10분)</button>
+                        <button class="btn" data-time="classical">클래식 (15분)</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="side-panel">
+                <div class="game-result-display">
+                    <h3>게임 결과</h3>
+                    <div id="game-result-display" class="result-display">
+                        <div class="result-text" id="result-text"></div>
+                    </div>
+                </div>
+                
+                <div class="move-history">
+                    <h3>이동 기록</h3>
+                    <div id="move-history"></div>
+                </div>
+                
+                <div class="captured-pieces">
+                    <h3>잡은 말</h3>
+                    <div class="captured-white">
+                        <h4>흰색이 잡은 말:</h4>
+                        <div id="captured-white"></div>
+                    </div>
+                    <div class="captured-black">
+                        <h4>검은색이 잡은 말:</h4>
+                        <div id="captured-black"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="footer-info">
+                <div class="creator-box">
+                    <p>🎮 체스 게임 - 온라인 멀티플레이어</p>
+                    <p>♔ AI 대전 | ♚ 퍼즐 모드 | ♖ 전술 연습</p>
+                </div>
+                <div class="footer-links">
+                    <a href="#" onclick="showPrivacyPolicy()">개인정보처리방침</a>
+                    <a href="#" onclick="showTermsOfService()">이용약관</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 모달 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="modal-text"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
+        
+                   

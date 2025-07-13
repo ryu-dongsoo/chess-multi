@@ -1,0 +1,139 @@
+name: Chess Game API
+
+on:
+  repository_dispatch:
+    types: [game-action]
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Game action to perform'
+        required: true
+        default: 'create-game'
+      room_id:
+        description: 'Room ID'
+        required: false
+      player_name:
+        description: 'Player name'
+        required: false
+      move_data:
+        description: 'Move data (JSON)'
+        required: false
+
+jobs:
+  handle-game-action:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Handle Game Action
+        run: |
+          ACTION="${{ github.event.client_payload.action || github.event.inputs.action }}"
+          ROOM_ID="${{ github.event.client_payload.room_id || github.event.inputs.room_id }}"
+          PLAYER_NAME="${{ github.event.client_payload.player_name || github.event.inputs.player_name }}"
+          MOVE_DATA="${{ github.event.client_payload.move_data || github.event.inputs.move_data }}"
+          
+          echo "Processing action: $ACTION"
+          echo "Room ID: $ROOM_ID"
+          echo "Player name: $PLAYER_NAME"
+          echo "Move data: $MOVE_DATA"
+          
+          # 게임 액션 처리
+          node api/$ACTION.js "$ROOM_ID" "$PLAYER_NAME" "$MOVE_DATA"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  create-game:
+    runs-on: ubuntu-latest
+    if: github.event.client_payload.action == 'create-game'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Create new game
+        run: |
+          ROOM_ID="${{ github.event.client_payload.room_id }}"
+          PLAYER_NAME="${{ github.event.client_payload.player_name }}"
+          
+          # GitHub Issues에 게임 생성
+          node api/create-game.js "$ROOM_ID" "$PLAYER_NAME"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  join-game:
+    runs-on: ubuntu-latest
+    if: github.event.client_payload.action == 'join-game'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Join game
+        run: |
+          ROOM_ID="${{ github.event.client_payload.room_id }}"
+          PLAYER_NAME="${{ github.event.client_payload.player_name }}"
+          
+          # 게임 참가 처리
+          node api/join-game.js "$ROOM_ID" "$PLAYER_NAME"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  make-move:
+    runs-on: ubuntu-latest
+    if: github.event.client_payload.action == 'make-move'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Make move
+        run: |
+          ROOM_ID="${{ github.event.client_payload.room_id }}"
+          MOVE_DATA="${{ github.event.client_payload.move_data }}"
+          
+          # 말 이동 처리
+          node api/make-move.js "$ROOM_ID" "$MOVE_DATA"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  get-game-state:
+    runs-on: ubuntu-latest
+    if: github.event.client_payload.action == 'get-game-state'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Get game state
+        run: |
+          ROOM_ID="${{ github.event.client_payload.room_id }}"
+          
+          # 게임 상태 조회
+          node api/get-game-state.js "$ROOM_ID"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
