@@ -1796,3 +1796,28 @@ AI 전문가 난이도에 실제 체스 마스터들이 사용하는 고급 전�
 - `checkGameUpdates`에서 승진 정보 처리 시 바로 승진된 말로 교체
 
 이제 온라인 플레이에서 폰 승진 시 말 복사 문제가 해결되었습니다.
+
+### 2024-12-19 - Railway 배포 성공
+- **Railway 프로젝트 URL**: https://railway.com/project/69f444e3-8574-49c4-92ae-744343fe0087/service/2df7d024-caab-4612-8566-e19203076aa5?environmentId=cd67845a-914a-4cb3-8949-bebd4caf7755
+- **배포된 사이트 URL**: https://chess-multi-production.up.railway.app/
+- **배포 상태**: 성공적으로 배포됨 ✅
+- **포트**: Railway에서 자동으로 포트 할당 (8000번 포트 사용)
+- **다음 단계**: 
+  1. 온라인 모드 테스트
+  2. WebSocket 연결 확인
+  3. 멀티플레이어 기능 테스트
+  4. AI 대전 모드 테스트
+
+### 2024-12-19 - JavaScript 구문 오류 수정
+- **문제**: `Uncaught SyntaxError: Unexpected token '<'` 및 `Unexpected token '{'` 오류 발생
+- **원인**: `undoMove` 메서드에서 `this.currentPlayer = ...` 줄의 들여쓰기가 잘못됨
+- **해결**:
+  1. 백업 파일 생성: `docs/script_backup.js`
+  2. sed 명령어로 들여쓰기 수정: `sed -i 's/^            this\.currentPlayer/        this.currentPlayer/'`
+  3. 변경사항 커밋 및 푸시 완료
+- **결과**: JavaScript 구문 오류 해결됨
+
+### 2024-12-19 - JavaScript 구문 오류 수정 (2차)
+- **문제**: `Uncaught SyntaxError: Unexpected token '<'` 및 `Unexpected token '{'` 오류 재발생
+- **원인**: `loadGameState` 메서드에서 `this.currentPlayer = gameState.currentPlayer;` 줄의 들여쓰기가 잘못됨
+- **해결**:\n  1. sed 명령어로 들여쓰기 수정: `sed -i 's/^        this\\.currentPlayer/            this.currentPlayer/'`\n  2. 변경사항 커밋 및 푸시 완료\n- **결과**: JavaScript 구문 오류 해결됨\n\n// ... existing code ...
