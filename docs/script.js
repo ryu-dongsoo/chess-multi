@@ -3657,8 +3657,11 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         this.playerName = playerName;
         this.gameMode = 'online-player';
         
-        // WebSocket 연결 - 로컬 서버 사용
-        const wsUrl = `ws://localhost:3000?roomId=${roomId}&playerName=${encodeURIComponent(playerName)}`;
+        // Railway 배포를 위한 동적 URL 설정
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.hostname;
+        const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
+        const wsUrl = `${protocol}//${host}:${port}?roomId=${roomId}&playerName=${encodeURIComponent(playerName)}`;
         
         console.log('WebSocket 연결 시도:', wsUrl);
         this.ws = new WebSocket(wsUrl);
