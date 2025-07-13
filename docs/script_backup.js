@@ -25,9 +25,9 @@ class ChessGame {
         this.deepLearningModel = this.initializeDeepLearningModel();
         
         // Stockfish AI 엔진 초기화
-        // this.stockfish = null;
-        // this.stockfishReady = false;
-        // this.initializeStockfish();
+        this.stockfish = null;
+        this.stockfishReady = false;
+        this.initializeStockfish();
         
         // 성능 최적화를 위한 캐시
         this.moveCache = new Map();
@@ -54,22 +54,22 @@ class ChessGame {
     }
 
     // 강화된 AI 엔진 초기화 (사람이 절대 이길 수 없는 수준)
-    // initializeStockfish() {
-    //     console.log('Stockfish 엔진 초기화 시작...');
+    initializeStockfish() {
+        console.log('Stockfish 엔진 초기화 시작...');
         
-    //     try {
-    //         // 로컬 파일 접근 제한으로 인해 API 방식으로 폴백
-    //         console.log('로컬 Stockfish Web Worker 접근 제한으로 API 방식 사용');
-    //         this.stockfish = null;
-    //         this.stockfishReady = false;
+        try {
+            // 로컬 파일 접근 제한으로 인해 API 방식으로 폴백
+            console.log('로컬 Stockfish Web Worker 접근 제한으로 API 방식 사용');
+            this.stockfish = null;
+            this.stockfishReady = false;
             
-    //         // API 방식으로 Stockfish 사용
-    //         console.log('Stockfish API 방식으로 초기화 완료');
-    //     } catch (error) {
-    //         console.error('Stockfish 초기화 실패:', error);
-    //         this.stockfishReady = false;
-    //     }
-    // }
+            // API 방식으로 Stockfish 사용
+            console.log('Stockfish API 방식으로 초기화 완료');
+        } catch (error) {
+            console.error('Stockfish 초기화 실패:', error);
+            this.stockfishReady = false;
+        }
+    }
 
     // Stockfish 메시지 처리
     handleStockfishMessage(message) {
@@ -632,7 +632,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
             this.board = JSON.parse(JSON.stringify(gameState.board));
         }
         if (gameState.currentPlayer) {
-        this.currentPlayer = gameState.currentPlayer;
+            this.currentPlayer = gameState.currentPlayer;
         }
         if (gameState.moveHistory) {
             this.moveHistory = JSON.parse(JSON.stringify(gameState.moveHistory));
@@ -726,11 +726,11 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         
         // AI 대전 모드면 항상 플레이어가 흰색, AI가 검은색
         if (this.gameMode === 'ai') {
-        this.currentPlayer = 'white';
+            this.currentPlayer = 'white';
             this.playerColor = 'white';
             console.log('AI 모드 설정: 플레이어=white, AI=black');
         } else {
-        this.currentPlayer = 'white';
+            this.currentPlayer = 'white';
         }
         this.selectedPiece = null;
         this.moveHistory = [];
@@ -874,7 +874,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         // AI 대전 모드일 때 플레이어는 항상 흰색, AI는 검은색
         if (mode === 'ai') {
             this.playerColor = 'white';
-        this.currentPlayer = 'white'; // 게임 리셋 시에도 반영
+            this.currentPlayer = 'white'; // 게임 리셋 시에도 반영
         }
         
         // 패널 표시/숨김
@@ -4419,7 +4419,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
             this.currentPuzzle = puzzleList[randomIndex];
             
             this.board = JSON.parse(JSON.stringify(this.currentPuzzle.board));
-        this.currentPlayer = 'white';
+            this.currentPlayer = 'white';
             this.puzzleMode = true;
             this.puzzleSolved = false;
             this.puzzleAITurn = false; // AI 턴 플래그
@@ -4441,7 +4441,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 ['', '', '', '', '', '', '', ''],
                 ['♔', '', '', '', '', '', '', '♚']
             ];
-        this.currentPlayer = 'white';
+            this.currentPlayer = 'white';
             this.puzzleMode = true;
             this.puzzleSolved = false;
             this.puzzleAITurn = false;

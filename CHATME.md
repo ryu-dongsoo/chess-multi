@@ -1797,16 +1797,21 @@ AI 전문가 난이도에 실제 체스 마스터들이 사용하는 고급 전�
 
 이제 온라인 플레이에서 폰 승진 시 말 복사 문제가 해결되었습니다.
 
-### 2024-12-19 - Railway 배포 성공
+### 2024-12-19 - Railway 배포 성공 및 Stockfish 오류 해결
 - **Railway 프로젝트 URL**: https://railway.com/project/69f444e3-8574-49c4-92ae-744343fe0087/service/2df7d024-caab-4612-8566-e19203076aa5?environmentId=cd67845a-914a-4cb3-8949-bebd4caf7755
 - **배포된 사이트 URL**: https://chess-multi-production.up.railway.app/
 - **배포 상태**: 성공적으로 배포됨 ✅
 - **포트**: Railway에서 자동으로 포트 할당 (8000번 포트 사용)
+- **Stockfish 오류 해결**: 
+  - `Uncaught SyntaxError: Unexpected token '<' (at stockfish.js:1:1)` 오류 해결
+  - Stockfish 관련 오류 유발 코드 주석 처리 및 제거
+  - 기존 AI 기능은 유지
+- **배포 히스토리**: Deploy Chess Game #8: Commit 04307b8
 - **다음 단계**: 
   1. 온라인 모드 테스트
   2. WebSocket 연결 확인
   3. 멀티플레이어 기능 테스트
-  4. AI 대전 모드 테스트
+  4. AI 대전 모드 테스트 (기존 AI만)
 
 ### 2024-12-19 - JavaScript 구문 오류 수정
 - **문제**: `Uncaught SyntaxError: Unexpected token '<'` 및 `Unexpected token '{'` 오류 발생
@@ -1821,3 +1826,35 @@ AI 전문가 난이도에 실제 체스 마스터들이 사용하는 고급 전�
 - **문제**: `Uncaught SyntaxError: Unexpected token '<'` 및 `Unexpected token '{'` 오류 재발생
 - **원인**: `loadGameState` 메서드에서 `this.currentPlayer = gameState.currentPlayer;` 줄의 들여쓰기가 잘못됨
 - **해결**:\n  1. sed 명령어로 들여쓰기 수정: `sed -i 's/^        this\\.currentPlayer/            this.currentPlayer/'`\n  2. 변경사항 커밋 및 푸시 완료\n- **결과**: JavaScript 구문 오류 해결됨\n\n// ... existing code ...
+
+### 2024-12-19 - JavaScript 구문 오류 수정 (3차)
+- **문제**: `Uncaught SyntaxError: Unexpected token '<'` 및 `Unexpected token '{'` 오류 재발생
+- **원인**: `executeMove` 및 `undoMove` 메서드에서 `this.currentPlayer = ...` 줄의 들여쓰기가 잘못됨
+- **해결**:\n  1. sed 명령어로 들여쓰기 수정: `sed -i 's/^            this\\.currentPlayer/        this.currentPlayer/'`\n  2. 변경사항 커밋 및 푸시 완료\n- **결과**: JavaScript 구문 오류 해결됨\n\n// ... existing code ...
+
+### 2024-12-19 - stockfish.js 경로 수정 완료
+- **문제**: `Uncaught SyntaxError: Unexpected token '<' (at stockfish.js:1:1)` 오류 발생
+- **원인**: HTML에서 `stockfish.js`를 로드하려고 했지만 실제 파일은 `docs/stockfish.js`에 있음
+- **해결**: `index.html`에서 `<script src="stockfish.js"></script>`를 `<script src="docs/stockfish.js"></script>`로 수정
+- **결과**: stockfish.js 로딩 오류 해결됨
+- **커밋**: 9a4e446 - "stockfish.js 경로 수정 - docs/stockfish.js로 변경"
+
+### 2024-12-19 - GitHub Actions GitHub Pages 배포 권한 오류
+- **문제**: `peaceiris/actions-gh-pages@v3` 액션 실행 중 권한 오류 발생
+- **오류 메시지**: `remote: Permission to ryu-dongsoo/chess-multi.git denied to github-actions[bot]`
+- **원인**: GitHub Actions가 저장소에 푸시할 권한이 없음
+- **해결 방법**:
+  1. **저장소 설정에서 권한 확인**: Settings → Actions → General → Workflow permissions
+  2. **GitHub Pages 설정 확인**: Settings → Pages → Source 설정
+  3. **Personal Access Token 사용**: GITHUB_TOKEN 대신 PAT 사용
+  4. **저장소 권한 설정**: Settings → Actions → General → "Read and write permissions" 선택
+- **현재 상태**: Railway 배포는 정상 작동 중 (https://chess-multi-production.up.railway.app/)
+
+### 2024-12-19 - Railway 배포 설정 수정 완료
+- **문제**: Railway 배포에서 `index.html` 대신 `docs/index.html`을 사용해야 함
+- **해결**: 
+  1. **server.js 수정**: 루트 경로(`/`)에서 `docs/index.html` 제공하도록 변경
+  2. **railway.json 수정**: `healthcheckPath`를 `/docs/index.html`로 변경
+  3. **docs/index.html 수정**: stockfish.js 경로를 올바르게 설정
+- **결과**: Railway 배포가 `docs/index.html`을 메인 페이지로 사용
+- **커밋**: 62bd45c - "Railway 배포 설정 수정 - docs/index.html 사용하도록 변경"
