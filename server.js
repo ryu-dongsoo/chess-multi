@@ -457,7 +457,7 @@ function isValidMove(board, fromRow, fromCol, toRow, toCol, color) {
            (fromRow !== toRow || fromCol !== toCol);
 }
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`체스 서버가 포트 ${PORT}에서 실행 중입니다.`);
     console.log(`웹소켓 URL: ws://localhost:${PORT}`);
