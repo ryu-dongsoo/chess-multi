@@ -1786,7 +1786,7 @@ AI 전문가 난이도에 실제 체스 마스터들이 사용하는 고급 전�
 
 **해결 방법**:
 
-1. **`makeMove` 함수 수정**: 폰 승진 시에는 승진 다이얼로그가 완료될 때까지 서버 전송을 하지 않도록 수정
+1. **`makeMove` 함수 수정**: 폰 승진 시에는 서버 전송을 하지 않고 승진 다이얼로그에서 완료 후 전송
 2. **`showPromotionDialog` 함수 수정**: 승진 완료 후에만 서버에 전송하도록 수정
 3. **`checkGameUpdates` 함수 수정**: 승진 정보 처리 시 폰을 확인하지 않고 바로 승진된 말로 교체하도록 수정
 
@@ -1858,3 +1858,46 @@ AI 전문가 난이도에 실제 체스 마스터들이 사용하는 고급 전�
   3. **docs/index.html 수정**: stockfish.js 경로를 올바르게 설정
 - **결과**: Railway 배포가 `docs/index.html`을 메인 페이지로 사용
 - **커밋**: 62bd45c - "Railway 배포 설정 수정 - docs/index.html 사용하도록 변경"
+
+### 2024-12-19 - 루트 index.html 삭제 완료
+- **문제**: Railway 배포에서 루트의 `index.html`과 `docs/index.html`이 혼재되어 혼란 발생
+- **해결**: 루트의 `index.html` 파일을 완전히 삭제하고 `docs/index.html`만 사용
+- **결과**: 
+  - 루트에 `index.html` 파일 없음
+  - `docs/index.html`이 유일한 메인 페이지
+  - Railway 배포가 명확하게 `docs/index.html`을 사용
+- **커밋**: d3259aa - "루트 index.html 삭제 - docs/index.html만 사용하도록 정리"
+
+### 2024-12-19 - JavaScript 오류 수정 완료 (최종)
+- **문제**: 
+  1. `GET https://chess-multi-production.up.railway.app/stockfish.js net::ERR_ABORTED 404 (Not Found)`
+  2. `script.js:492 Uncaught SyntaxError: Unexpected token '{'`
+- **해결**: 
+  1. **stockfish.js 로딩 제거**: `docs/index.html`에서 stockfish.js 스크립트 태그 주석 처리
+  2. **loadGameState 들여쓰기 수정**: `this.currentPlayer = gameState.currentPlayer;` 줄의 들여쓰기 수정
+- **결과**: 
+  - stockfish.js 404 오류 해결
+  - JavaScript 구문 오류 해결
+  - 기존 AI 기능은 유지 (Stockfish 제외)
+- **커밋**: a8c4fe7 - "JavaScript 오류 수정 - loadGameState 들여쓰기 및 stockfish.js 로딩 제거"
+
+### 사용자 요청: 스크립트와 스타일 파일도 docs 폴더의 파일을 사용하도록 설정
+
+**상황**: 사용자가 서버가 docs 폴더의 파일들을 사용하도록 요청
+
+**해결 과정**:
+1. 현재 파일 구조 확인 - docs 폴더에 index.html, script.js, style.css 파일들이 존재
+2. server.js에서 루트 경로(`/`)에서 `docs/index.html`을 제공하도록 설정
+3. docs 폴더에 index.html, script.js, style.css 파일들이 모두 존재함을 확인
+4. docs/index.html에서 올바른 경로로 script.js와 style.css를 참조하고 있음을 확인
+
+**해결 방법 제안**:
+1. 브라우저 캐시 강제 새로고침: `Ctrl + F5` (Windows) 또는 `Cmd + Shift + R` (Mac)
+2. 개발자 도구에서 캐시 비활성화: F12 → Network 탭 → "Disable cache" 체크박스 활성화
+3. 시크릿/프라이빗 모드에서 접속
+4. 서버 재시작 완료
+
+**현재 상태**: 
+- 서버가 docs/index.html을 메인 페이지로 제공하도록 설정됨
+- docs 폴더의 모든 파일들이 올바르게 존재함
+- 브라우저 캐시 문제일 가능성이 높음
