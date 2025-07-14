@@ -3753,7 +3753,9 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         }
     }
 
-    // WebSocket 기반 온라인 플레이 메서드들
+    // ===== 새로운 온라인 멀티플레이어 시스템 =====
+    
+    // 온라인 게임 연결
     createRoom() {
         const playerName = document.getElementById('player-name')?.value || 'Player';
         const roomId = document.getElementById('room-id')?.value || `room_${Date.now()}`;
@@ -3772,88 +3774,83 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
 
     randomMatch() {
         const playerName = document.getElementById('player-name')?.value || 'Player';
-        this.findAvailableRoom(playerName);
+        const roomId = `random_${Date.now()}`;
+        this.connectToWebSocket(roomId, playerName);
     }
 
+    // WebSocket 연결
     connectToWebSocket(roomId, playerName) {
-        console.log('=== connectToWebSocket 호출됨 ===');
-        console.log('roomId:', roomId);
-        console.log('playerName:', playerName);
+        console.log('온라인 게임 연결 시작:', { roomId, playerName });
         
         this.roomId = roomId;
         this.playerName = playerName;
         this.gameMode = 'online-player';
         
-        // Railway 배포를 위한 동적 URL 설정
+        // 동적 URL 설정
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const host = window.location.hostname;
         const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
         const wsUrl = `${protocol}//${host}:${port}?roomId=${roomId}&playerName=${encodeURIComponent(playerName)}`;
         
-        console.log('🌐 WebSocket 연결 시도:', wsUrl);
-        console.log('프로토콜:', protocol);
-        console.log('호스트:', host);
-        console.log('포트:', port);
+        console.log('WebSocket URL:', wsUrl);
         
         this.ws = new WebSocket(wsUrl);
         
         this.ws.onopen = () => {
-            console.log('✅ WebSocket 연결 성공');
-            console.log('WebSocket 상태:', this.ws.readyState);
+            console.log('WebSocket 연결 성공');
             this.updateConnectionStatus('연결됨', true);
         };
         
         this.ws.onmessage = (event) => {
-            console.log('📨 WebSocket 메시지 수신:', event.data);
             try {
                 const data = JSON.parse(event.data);
-                console.log('📨 파싱된 메시지:', data);
                 this.handleWebSocketMessage(data);
             } catch (error) {
-                console.error('❌ WebSocket 메시지 파싱 오류:', error);
-                console.error('원본 메시지:', event.data);
+                console.error('WebSocket 메시지 파싱 오류:', error);
             }
         };
         
-        this.ws.onclose = (event) => {
-            console.log('🔌 WebSocket 연결 종료');
-            console.log('종료 코드:', event.code);
-            console.log('종료 이유:', event.reason);
+        this.ws.onclose = () => {
+            console.log('WebSocket 연결 종료');
             this.updateConnectionStatus('연결 끊김', false);
         };
         
         this.ws.onerror = (error) => {
-            console.error('❌ WebSocket 오류:', error);
+            console.error('WebSocket 오류:', error);
             this.updateConnectionStatus('연결 오류', false);
         };
     }
 
+    // WebSocket 메시지 처리 (간단한 권위 서버 모델)
     handleWebSocketMessage(data) {
-        console.log('WebSocket 메시지 수신:', data);
+        console.log('서버 메시지 수신:', data.type);
         
         switch (data.type) {
             case 'playerAssigned':
                 this.playerColor = data.color;
-                console.log(`플레이어 색상 할당: ${data.color}`);
-                this.updateConnectionStatus(data.message, true);
+                console.log('플레이어 색상 할당:', data.color);
+                this.updateConnectionStatus('게임 대기 중...', true);
                 break;
                 
             case 'gameStart':
                 this.playerColor = data.playerColor;
                 this.loadGameState(data.gameState);
-                console.log(`게임 시작! 내 색상: ${data.playerColor}`);
-                this.updateConnectionStatus('게임 시작!', true);
+                console.log('게임 시작! 내 색상:', data.playerColor);
+                this.updateConnectionStatus('게임 진행 중', true);
                 break;
                 
-            case 'move':
-                if (data.playerName !== this.playerName) {
-                    console.log('상대방 이동 수신:', data);
-                    this.handleOpponentMove(data);
-                }
+            case 'moveUpdate':
+                // 서버 상태를 완전히 신뢰하고 적용
+                this.loadGameState(data.gameState);
+                this.renderBoard();
+                this.updateGameStatus();
+                this.updateMoveHistory();
+                this.updateCapturedPieces();
+                this.clearSelection();
+                this.checkGameEnd();
                 break;
                 
             case 'gameOver':
-                console.log('게임 종료:', data);
                 this.endGame(data.result, data.winner, data.loser);
                 break;
                 
@@ -3862,384 +3859,41 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 this.updateConnectionStatus(`오류: ${data.message}`, false);
                 break;
                 
-            case 'moveUpdate':
-                console.log('=== moveUpdate 메시지 수신 ===');
-                console.log('받은 데이터:', data);
-                console.log('현재 보드 상태:', this.board);
-                console.log('내 플레이어 이름:', this.playerName);
-                console.log('lastMove 플레이어:', data.lastMove ? '서버에서 받은 이동' : '없음');
-                
-                // 이전 보드 상태 저장 (시각적 효과를 위해)
-                const previousBoard = JSON.parse(JSON.stringify(this.board));
-                console.log('이전 보드 상태:', previousBoard);
-                
-                // 서버 상태 로드
-                this.loadGameState(data.gameState);
-                
-                // 보드 상태가 실제로 변경되었는지 확인
-                console.log('서버에서 받은 보드 상태:', data.gameState.board);
-                console.log('업데이트 후 보드 상태:', this.board);
-                
-                // 상세한 보드 상태 비교
-                console.log('상세한 보드 상태 비교:');
-                console.log('서버에서 받은 보드 상태 (JSON):', JSON.stringify(data.gameState.board));
-                console.log('현재 보드 상태 (JSON):', JSON.stringify(this.board));
-                
-                let hasChanges = false;
-                for (let row = 0; row < 8; row++) {
-                    for (let col = 0; col < 8; col++) {
-                        const before = previousBoard[row][col];
-                        const after = this.board[row][col];
-                        const serverPiece = data.gameState.board[row][col];
-                        
-                        console.log(`[${row},${col}] - 이전: "${before}", 현재: "${after}", 서버: "${serverPiece}"`);
-                        
-                        if (before !== after) {
-                            console.log(`[${row},${col}] 변경됨: "${before}" -> "${after}"`);
-                            hasChanges = true;
-                        }
-                        
-                        if (after !== serverPiece) {
-                            console.log(`[${row},${col}] 서버와 불일치: 클라이언트 "${after}" vs 서버 "${serverPiece}"`);
-                        }
-                    }
-                }
-                
-                if (!hasChanges) {
-                    console.log('보드 상태 변경 사항이 없음 - 강제 렌더링 시도');
-                    // 보드 상태가 변경되지 않았더라도 강제 렌더링
-                    this.forceRenderBoard();
-                }
-                
-                // 보드 상태가 다르면 강제로 다시 렌더링
-                if (JSON.stringify(this.board) !== JSON.stringify(previousBoard)) {
-                    console.log('보드 상태가 변경됨 - 강제 렌더링');
-                    this.forceRenderBoard();
-                    
-                    // 렌더링 후 실제 DOM 상태 확인
-                    setTimeout(() => {
-                        const chessboard = document.getElementById('chessboard');
-                        if (chessboard) {
-                            console.log('렌더링 후 DOM 상태 확인:');
-                            for (let row = 0; row < 8; row++) {
-                                for (let col = 0; col < 8; col++) {
-                                    const square = chessboard.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                                    const piece = square ? square.textContent : '';
-                                    console.log(`[${row},${col}]: "${piece}" (보드: "${this.board[row][col]}")`);
-                                }
-                            }
-                        }
-                    }, 100);
-                } else {
-                    console.log('보드 상태가 변경되지 않음');
-                }
-                
-                // lastMove 정보가 있으면 시각적 효과 추가
-                if (data.lastMove) {
-                    console.log('시각적 효과 추가:', data.lastMove);
-                    this.addMoveVisualEffect(data.lastMove, previousBoard);
-                }
-                
-                console.log('=== moveUpdate 처리 완료 ===');
-                break;
-                
             default:
                 console.log('알 수 없는 메시지 타입:', data.type);
         }
     }
 
-    handleOpponentMove(data) {
-        const { fromRow, fromCol, toRow, toCol, piece, capturedPiece, specialType } = data;
-        
-        console.log('상대방 이동 처리:', data);
-        
-        // 상대방의 이동을 보드에 반영
-        this.board[toRow][toCol] = piece;
-        this.board[fromRow][fromCol] = '';
-        
-        // 특별한 이동 처리 (온라인 모드에서는 서버 상태를 신뢰하므로 건너뜀)
-        if (this.gameMode !== 'online-player') {
-            if (specialType === 'kingside-castling' || specialType === 'queenside-castling') {
-                this.executeCastling(fromRow, fromCol, toRow, toCol);
-            } else if (specialType === 'en-passant') {
-                this.executeEnPassant(fromRow, fromCol, toRow, toCol);
-            }
-        }
-        
-        // 이동 기록에 추가
-        this.moveHistory.push({
-            from: { row: fromRow, col: fromCol },
-            to: { row: toRow, col: toCol },
-            piece: piece,
-            captured: capturedPiece,
-            special: specialType
-        });
-        
-        // 턴 변경은 서버에서 관리하므로 여기서는 시각적 효과만 처리
-        console.log('시각적 이동 효과 처리 완료');
-        
-        // UI 업데이트
-        this.renderBoard();
-        this.updateGameStatus();
-        this.updateMoveHistory();
-        this.updateCapturedPieces();
-        this.clearSelection();
-        
-        // 게임 종료 확인
-        this.checkGameEnd();
-        
-        console.log('상대방 이동 처리 완료');
-    }
-
-    startPolling() {
-        // 1초마다 게임 상태 확인 (더 빠른 응답을 위해)
-        this.pollInterval = setInterval(() => {
-            this.checkGameUpdates();
-        }, 1000);
-    }
-
-    checkGameUpdates() {
-        if (!this.roomId) return;
-
-        const gameKey = `chess_game_${this.roomId}`;
-        const gameData = localStorage.getItem(gameKey);
-        
-        if (gameData) {
-            const game = JSON.parse(gameData);
-            
-            // 플레이어 색상 할당 확인
-            if (game.playerColors && !game.playerColors[this.playerName]) {
-                // 두 번째 플레이어는 검은색으로 할당
-                game.playerColors[this.playerName] = 'black';
-                game.players.push({name: this.playerName, color: 'black', joinedAt: Date.now()});
-                game.status = 'playing';
-                localStorage.setItem(gameKey, JSON.stringify(game));
-                this.playerColor = 'black';
-                console.log(`참여자 팀 할당: ${this.playerName} -> 검은색`);
-            }
-            
-            // 게임 상태가 변경되었는지 확인 (온라인 모드에서만)
-            if (this.gameMode === 'online-player' && JSON.stringify(game.gameState) !== JSON.stringify(this.board)) {
-                console.log('상대방의 이동을 감지했습니다. 게임 상태를 업데이트합니다.');
-                
-                // 완전한 게임 상태 로드 (깊은 복사)
-                this.board = JSON.parse(JSON.stringify(game.gameState));
-                this.currentPlayer = game.currentPlayer;
-                this.moveHistory = JSON.parse(JSON.stringify(game.moveHistory || []));
-                
-                // 승진 정보가 있는지 확인하고 처리
-                if (game.moveHistory && game.moveHistory.length > 0) {
-                    const lastMove = game.moveHistory[game.moveHistory.length - 1];
-                    if (lastMove && lastMove.special === 'promotion' && lastMove.promotedPiece) {
-                        const promotionRow = lastMove.to.row;
-                        const promotionCol = lastMove.to.col;
-                        
-                        // 해당 위치에 해당 색의 폰이 있는지 확인
-                        const currentPiece = this.board[promotionRow][promotionCol];
-                        const expectedPawn = lastMove.promotedColor === 'white' ? '♙' : '♟';
-                        
-                        // 해당 색의 폰이 있는 경우에만 승진 처리
-                        if (currentPiece === expectedPawn) {
-                            this.board[promotionRow][promotionCol] = lastMove.promotedPiece;
-                            console.log(`${lastMove.promotedColor} 폰 승진: ${expectedPawn} → ${lastMove.promotedPiece}`);
-                        } else if (currentPiece !== lastMove.promotedPiece) {
-                            // 이미 승진된 말이 아닌 경우에만 처리 (안전장치)
-                            console.log(`승진 위치에 예상한 폰이 없음: ${currentPiece} (예상: ${expectedPawn})`);
-                        }
-                    }
-                }
-                
-                // UI 업데이트
-                this.renderBoard();
-                this.updateGameStatus();
-                this.updateMoveHistory();
-                this.updateCapturedPieces();
-                this.clearSelection();
-                
-                // 게임 종료 조건 확인
-                this.checkGameEnd();
-                
-                console.log('상대방 이동 반영 완료');
-                console.log('현재 보드 상태:', this.board);
-                console.log('현재 플레이어:', this.currentPlayer);
-                console.log('이동 기록:', this.moveHistory);
-            }
-            
-            // 상대방 정보 표시
-            if (game.players.length === 2) {
-                const opponent = game.players.find(p => p.name !== this.playerName);
-                if (opponent) {
-                    console.log(`상대방: ${opponent.name} (${opponent.color})`);
-                }
-            }
-        }
-    }
-
-    addMoveVisualEffect(lastMove, previousBoard) {
-        console.log('=== 시각적 효과 추가 ===');
-        console.log('마지막 이동:', lastMove);
-        console.log('이전 보드:', previousBoard);
-        console.log('현재 보드:', this.board);
-        
-        const { fromRow, fromCol, toRow, toCol, piece, captured, special } = lastMove;
-        
-        // 강제 렌더링 사용
-        console.log('보드 강제 업데이트 시작');
-        this.forceRenderBoard();
-        
-        // DOM 요소가 업데이트될 때까지 잠시 대기
-        setTimeout(() => {
-            // 모든 사각형 요소 확인
-            const allSquares = document.querySelectorAll('.square');
-            console.log('총 사각형 수:', allSquares.length);
-            
-            // 이동된 말에 하이라이트 효과 추가
-            const fromSquare = document.querySelector(`[data-row="${fromRow}"][data-col="${fromCol}"]`);
-            const toSquare = document.querySelector(`[data-row="${toRow}"][data-col="${toCol}"]`);
-            
-            console.log('DOM 요소 찾기:', {
-                fromSquare: fromSquare,
-                toSquare: toSquare,
-                fromSelector: `[data-row="${fromRow}"][data-col="${fromCol}"]`,
-                toSelector: `[data-row="${toRow}"][data-col="${toCol}"]`
-            });
-            
-            // 대안 방법으로 DOM 요소 찾기
-            if (!fromSquare || !toSquare) {
-                console.log('대안 방법으로 DOM 요소 찾기 시도');
-                const chessboard = document.getElementById('chessboard');
-                if (chessboard) {
-                    const squares = chessboard.children;
-                    console.log('체스보드 자식 요소 수:', squares.length);
-                    
-                    for (let i = 0; i < squares.length; i++) {
-                        const square = squares[i];
-                        const row = square.getAttribute('data-row');
-                        const col = square.getAttribute('data-col');
-                        console.log(`사각형 ${i}: row=${row}, col=${col}`);
-                    }
-                }
-            }
-            
-            if (fromSquare) {
-                fromSquare.classList.add('move-from');
-                console.log('출발점 하이라이트 추가');
-                setTimeout(() => fromSquare.classList.remove('move-from'), 1000);
-            } else {
-                console.error('출발점 DOM 요소를 찾을 수 없음');
-            }
-            
-            if (toSquare) {
-                toSquare.classList.add('move-to');
-                console.log('도착점 하이라이트 추가');
-                setTimeout(() => toSquare.classList.remove('move-to'), 1000);
-            } else {
-                console.error('도착점 DOM 요소를 찾을 수 없음');
-            }
-            
-            // 사운드 재생
-            this.playPieceSound();
-            
-            console.log('시각적 효과 적용 완료');
-        }, 200); // 대기 시간 증가
-    }
-
+    // 서버로 이동 전송 (내 턴일 때만)
     sendMoveToServer(fromRow, fromCol, toRow, toCol, piece, capturedPiece, specialType = 'normal') {
-        console.log('=== sendMoveToServer 호출됨 ===');
-        console.log('WebSocket 상태:', this.ws ? this.ws.readyState : 'null');
-        console.log('WebSocket.OPEN:', WebSocket.OPEN);
-        console.log('연결됨:', this.ws && this.ws.readyState === WebSocket.OPEN);
+        if (this.gameMode !== 'online-player') return;
+        if (this.currentPlayer !== this.playerColor) return;
         
-        if (!this.ws) {
-            console.error('❌ WebSocket 객체가 없습니다.');
-            return;
-        }
+        console.log('서버로 이동 전송:', { fromRow, fromCol, toRow, toCol, piece });
         
-        if (this.ws.readyState !== WebSocket.OPEN) {
-            console.error('❌ WebSocket이 연결되지 않았습니다. 상태:', this.ws.readyState);
-            console.log('상태 설명:');
-            console.log('0 = CONNECTING');
-            console.log('1 = OPEN');
-            console.log('2 = CLOSING');
-            console.log('3 = CLOSED');
-            return;
-        }
-        
-        const moveData = {
-            type: 'move',
-            roomId: this.roomId,
-            playerName: this.playerName,
-            fromRow: fromRow,
-            fromCol: fromCol,
-            toRow: toRow,
-            toCol: toCol,
-            piece: piece,
-            capturedPiece: capturedPiece,
-            specialType: specialType
-        };
-        
-        console.log('✅ 서버로 이동 전송:', moveData);
-        console.log('JSON 문자열:', JSON.stringify(moveData));
-        
-        try {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            const moveData = {
+                type: 'move',
+                roomId: this.roomId,
+                playerName: this.playerName,
+                fromRow: fromRow,
+                fromCol: fromCol,
+                toRow: toRow,
+                toCol: toCol,
+                piece: piece,
+                capturedPiece: capturedPiece,
+                specialType: specialType
+            };
+            
             this.ws.send(JSON.stringify(moveData));
-            console.log('✅ 메시지 전송 성공');
-        } catch (error) {
-            console.error('❌ 메시지 전송 실패:', error);
-        }
-    }
-
-    findAvailableRoom(playerName) {
-        // 사용 가능한 방 찾기
-        const availableRooms = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith('chess_game_')) {
-                const gameData = JSON.parse(localStorage.getItem(key));
-                if (gameData.status === 'waiting' && gameData.players.length < 2) {
-                    availableRooms.push({
-                        roomId: gameData.roomId,
-                        players: gameData.players
-                    });
-                }
-            }
-        }
-        
-        if (availableRooms.length > 0) {
-            const randomRoom = availableRooms[Math.floor(Math.random() * availableRooms.length)];
-            console.log('랜덤 매칭으로 방에 참여합니다:', randomRoom.roomId);
-            this.connectToGitHubRoom(randomRoom.roomId, playerName);
         } else {
-            // 사용 가능한 방이 없으면 새 방 생성
-            const newRoomId = `room_${Date.now()}`;
-            console.log('사용 가능한 방이 없어 새 방을 생성합니다.');
-            this.connectToGitHubRoom(newRoomId, playerName);
+            console.error('WebSocket이 연결되지 않음');
         }
     }
 
-    handleGitHubMessage(data) {
-        switch (data.type) {
-            case 'playerJoined':
-                this.setPlayerColor(data.color);
-                alert(`${data.playerName}님이 게임에 참가했습니다!`);
-                break;
-            case 'gameStart':
-                this.setGameMode('online-player');
-                this.loadGameState(data.gameState);
-                alert(`게임이 시작되었습니다! 당신은 ${data.playerColor === 'white' ? '흰색' : '검은색'} 플레이어입니다.`);
-                break;
-            case 'moveUpdate':
-                this.loadGameState(data.gameState);
-                // UI 갱신은 loadGameState에서 처리
-                break;
-            case 'playerDisconnected':
-                alert(data.message);
-                break;
-            case 'error':
-                alert('오류: ' + data.message);
-                break;
-        }
-    }
+
+
+
 
     updateConnectionStatus(status, connected) {
         const statusElement = document.getElementById('connection-status');
