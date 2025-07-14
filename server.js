@@ -18,7 +18,13 @@ const server = http.createServer((req, res) => {
     
     // 정적 파일 제공
     let filePath = req.url === '/' ? '/docs/index.html' : req.url;
-    filePath = path.join(__dirname, filePath);
+    
+    // docs 폴더의 파일들을 우선적으로 제공
+    if (req.url.startsWith('/style.css') || req.url.startsWith('/script.js')) {
+        filePath = path.join(__dirname, 'docs', req.url.substring(1));
+    } else {
+        filePath = path.join(__dirname, filePath);
+    }
     
     // 파일 확장자에 따른 Content-Type 설정
     const ext = path.extname(filePath);
