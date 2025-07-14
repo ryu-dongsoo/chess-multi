@@ -318,7 +318,10 @@ class ChessGame {
         }
 
         // 온라인 모드에서 자신의 턴이 아니면 클릭 무시
-        if (this.gameMode === 'online-player' && this.currentPlayer !== this.playerColor) return;
+        if (this.gameMode === 'online-player' && this.currentPlayer !== this.playerColor) {
+            console.log(`턴 불일치 - 현재 턴: ${this.currentPlayer}, 내 색상: ${this.playerColor}`);
+            return;
+        }
 
         // AI 대전 모드에서 플레이어 턴(흰색)이 아니면 클릭 무시
         if (this.gameMode === 'ai' && this.currentPlayer !== 'white') return;
@@ -632,6 +635,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
             this.board = JSON.parse(JSON.stringify(gameState.board));
         }
         if (gameState.currentPlayer) {
+            console.log(`서버에서 턴 정보 로드: ${this.currentPlayer} -> ${gameState.currentPlayer}`);
             this.currentPlayer = gameState.currentPlayer;
         }
         if (gameState.moveHistory) {
@@ -3767,7 +3771,9 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         });
         
         // 턴 변경
+        const oldPlayer = this.currentPlayer;
         this.currentPlayer = this.currentPlayer === 'white' ? 'black' : 'white';
+        console.log(`턴 변경: ${oldPlayer} -> ${this.currentPlayer}`);
         
         // UI 업데이트
         this.renderBoard();
