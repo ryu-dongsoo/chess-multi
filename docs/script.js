@@ -710,6 +710,22 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         this.updateMoveHistory();
         if (this.updateCapturedPieces) this.updateCapturedPieces();
         console.log('UI 업데이트 완료');
+        // 디버깅: 렌더 직후 DOM 상태 확인
+        setTimeout(() => {
+            const chessboard = document.getElementById('chessboard');
+            if (chessboard) {
+                let domState = [];
+                for (let row = 0; row < 8; row++) {
+                    let rowStr = '';
+                    for (let col = 0; col < 8; col++) {
+                        const square = chessboard.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                        rowStr += square ? square.textContent : '.';
+                    }
+                    domState.push(rowStr);
+                }
+                console.log('[loadGameState] 렌더 직후 DOM 상태:', domState);
+            }
+        }, 100);
     }
 
     setPlayerColor(color) {
@@ -822,64 +838,12 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
     }
 
     forceRenderBoard() {
-        console.log('=== forceRenderBoard 호출됨 ===');
-        console.log('현재 보드 상태:', this.board);
-        
-        const chessboard = document.getElementById('chessboard');
-        if (!chessboard) {
-            console.error('체스보드 요소를 찾을 수 없음');
-            return;
-        }
-
-        console.log('강제 보드 렌더링 시작');
-        let html = '';
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                const piece = this.board[row][col];
-                const isLight = (row + col) % 2 === 0;
-                const squareClass = `square ${isLight ? 'white' : 'black'}`;
-                const pieceClass = piece ? 'piece' : '';
-                const selectedClass = this.selectedPiece && 
-                    this.selectedPiece.row === row && 
-                    this.selectedPiece.col === col ? 'selected' : '';
-                
-                html += `<div class="${squareClass} ${pieceClass} ${selectedClass}" data-row="${row}" data-col="${col}">${piece}</div>`;
-            }
-        }
-        
-        chessboard.innerHTML = html;
-        console.log('강제 보드 렌더링 완료');
-        console.log('생성된 HTML 길이:', html.length);
-        
-        // DOM 업데이트 확인 및 검증
-        setTimeout(() => {
-            const squares = document.querySelectorAll('.square');
-            console.log('DOM 업데이트 확인 - 총 사각형 수:', squares.length);
-            
-            // 렌더링 결과 검증
-            let renderSuccess = true;
-            for (let row = 0; row < 8; row++) {
-                for (let col = 0; col < 8; col++) {
-                    const square = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                    const expectedPiece = this.board[row][col];
-                    const actualPiece = square ? square.textContent : '';
-                    
-                    if (actualPiece !== expectedPiece) {
-                        console.error(`렌더링 불일치: [${row},${col}] - 예상: "${expectedPiece}", 실제: "${actualPiece}"`);
-                        renderSuccess = false;
-                    }
-                }
-            }
-            console.log('렌더링 검증 결과:', renderSuccess ? '성공' : '실패');
-            
-            if (!renderSuccess) {
-                console.log('렌더링 재시도...');
-                this.forceRenderBoard();
-            }
-        }, 100);
+        console.log('[forceRenderBoard] 호출, 현재 보드:', this.board);
+        this.renderBoard();
     }
 
     renderBoard() {
+        console.log('[renderBoard] 호출, 현재 보드:', this.board);
         console.log('=== renderBoard 호출됨 ===');
         console.log('현재 보드 상태:', this.board);
         
@@ -3832,6 +3796,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
     // WebSocket 메시지 처리 (간단한 권위 서버 모델)
     handleWebSocketMessage(data) {
         console.log('서버 메시지 수신:', data.type);
+        console.log('받은 메시지 전체:', data);
         
         switch (data.type) {
             case 'playerAssigned':
@@ -3849,7 +3814,9 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 
             case 'moveUpdate':
                 // 서버 상태를 완전히 신뢰하고 적용
+                console.log('[moveUpdate] 받은 gameState.board:', data.gameState.board);
                 this.loadGameState(data.gameState);
+                console.log('[moveUpdate] loadGameState 적용 후 this.board:', this.board);
                 this.renderBoard();
                 this.updateGameStatus();
                 this.updateMoveHistory();
