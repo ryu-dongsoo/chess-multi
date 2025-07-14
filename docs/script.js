@@ -646,6 +646,16 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
             console.log('보드 상태 업데이트 전:', this.board);
             console.log('서버에서 받은 보드:', gameState.board);
             
+            // 보드 상태 비교 (업데이트 전)
+            console.log('업데이트 전 보드 상태 비교:');
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    if (this.board[row][col] !== gameState.board[row][col]) {
+                        console.log(`[${row},${col}] 변경됨: "${this.board[row][col]}" -> "${gameState.board[row][col]}"`);
+                    }
+                }
+            }
+            
             // 깊은 복사로 보드 상태 업데이트
             this.board = [];
             for (let row = 0; row < 8; row++) {
@@ -3866,6 +3876,24 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 // 보드 상태가 실제로 변경되었는지 확인
                 console.log('서버에서 받은 보드 상태:', data.gameState.board);
                 console.log('업데이트 후 보드 상태:', this.board);
+                
+                // 상세한 보드 상태 비교
+                console.log('상세한 보드 상태 비교:');
+                let hasChanges = false;
+                for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        const before = previousBoard[row][col];
+                        const after = this.board[row][col];
+                        if (before !== after) {
+                            console.log(`[${row},${col}] 변경됨: "${before}" -> "${after}"`);
+                            hasChanges = true;
+                        }
+                    }
+                }
+                
+                if (!hasChanges) {
+                    console.log('보드 상태 변경 사항이 없음');
+                }
                 
                 // 보드 상태가 다르면 강제로 다시 렌더링
                 if (JSON.stringify(this.board) !== JSON.stringify(previousBoard)) {
