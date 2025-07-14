@@ -320,6 +320,7 @@ class ChessGame {
         // 온라인 모드에서 자신의 턴이 아니면 클릭 무시
         if (this.gameMode === 'online-player' && this.currentPlayer !== this.playerColor) {
             console.log(`턴 불일치 - 현재 턴: ${this.currentPlayer}, 내 색상: ${this.playerColor}`);
+            console.log('클릭 무시됨');
             return;
         }
 
@@ -369,7 +370,10 @@ class ChessGame {
         } else {
             // 말 선택 (현재 턴의 말만 선택 가능)
             if (this.isPieceOfCurrentPlayer(piece)) {
-            this.selectPiece(row, col);
+                console.log(`말 선택: ${piece} (${row},${col})`);
+                this.selectPiece(row, col);
+            } else {
+                console.log(`말 선택 불가: ${piece} (${row},${col}) - 현재 턴의 말이 아님`);
             }
         }
     }
@@ -401,9 +405,13 @@ class ChessGame {
         // 온라인 모드에서는 자신의 색깔의 말만 움직일 수 있음
         if (this.gameMode === 'online-player') {
             if (this.playerColor === 'white') {
-                return whitePieces.includes(piece);
+                const isWhitePiece = whitePieces.includes(piece);
+                console.log(`흰색 플레이어 말 확인: ${piece} -> ${isWhitePiece}`);
+                return isWhitePiece;
             } else if (this.playerColor === 'black') {
-                return blackPieces.includes(piece);
+                const isBlackPiece = blackPieces.includes(piece);
+                console.log(`검은색 플레이어 말 확인: ${piece} -> ${isBlackPiece}`);
+                return isBlackPiece;
             }
         }
         
