@@ -377,14 +377,16 @@ wss.on('connection', (ws, req) => {
 
 // 이동 처리
 function handleMove(ws, data, room) {
-    const { fromRow, fromCol, toRow, toCol } = data;
+    const { fromRow, fromCol, toRow, toCol, piece, capturedPiece, specialType } = data;
     const player = players.get(ws);
     
     console.log(`이동 요청: ${player.playerName}(${player.color}) ${fromRow},${fromCol} -> ${toRow},${toCol}`);
     console.log('현재 턴:', room.gameState.currentPlayer);
+    console.log('받은 데이터:', data);
     
     // 현재 플레이어 턴인지 확인
     if (room.gameState.currentPlayer !== player.color) {
+        console.log('턴 오류: 현재 턴은', room.gameState.currentPlayer, '플레이어 색상은', player.color);
         ws.send(JSON.stringify({
             type: 'error',
             message: '당신의 턴이 아닙니다.'
@@ -395,12 +397,12 @@ function handleMove(ws, data, room) {
     // 이동 유효성 검사 (간단한 버전)
     if (isValidMove(room.gameState.board, fromRow, fromCol, toRow, toCol, player.color)) {
         // 이동 실행
-        const piece = room.gameState.board[fromRow][fromCol];
+        const movedPiece = room.gameState.board[fromRow][fromCol];
         const capturedPiece = room.gameState.board[toRow][toCol];
         
-        console.log(`이동 실행: ${piece} ${fromRow},${fromCol} -> ${toRow},${toCol}`);
+        console.log(`이동 실행: ${movedPiece} ${fromRow},${fromCol} -> ${toRow},${toCol}`);
         
-        room.gameState.board[toRow][toCol] = piece;
+        room.gameState.board[toRow][toCol] = movedPiece;
         room.gameState.board[fromRow][fromCol] = '';
         
         // 플레이어 변경
@@ -410,8 +412,9 @@ function handleMove(ws, data, room) {
         room.gameState.moveHistory.push({
             from: { row: fromRow, col: fromCol },
             to: { row: toRow, col: toCol },
-            piece: piece,
-            captured: capturedPiece
+            piece: movedPiece,
+            captured: capturedPiece,
+            special: specialType || 'normal'
         });
         
         console.log('이동 후 보드 상태:', room.gameState.board);
@@ -423,11 +426,12 @@ function handleMove(ws, data, room) {
                 player.ws.send(JSON.stringify({
                     type: 'moveUpdate',
                     gameState: room.gameState,
-                    lastMove: { fromRow, fromCol, toRow, toCol }
+                    lastMove: { fromRow, fromCol, toRow, toCol, piece: movedPiece, captured: capturedPiece, special: specialType }
                 }));
             }
         });
     } else {
+        console.log('유효하지 않은 이동:', fromRow, fromCol, '->', toRow, toCol);
         ws.send(JSON.stringify({
             type: 'error',
             message: '유효하지 않은 이동입니다.'

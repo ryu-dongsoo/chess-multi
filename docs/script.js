@@ -3725,6 +3725,10 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 this.updateConnectionStatus(`오류: ${data.message}`, false);
                 break;
                 
+            case 'moveUpdate':
+                this.loadGameState(data.gameState);
+                break;
+                
             default:
                 console.log('알 수 없는 메시지 타입:', data.type);
         }
