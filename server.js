@@ -421,11 +421,19 @@ function handleMove(ws, data, room) {
         console.log('새로운 턴:', room.gameState.currentPlayer);
         
         // 모든 플레이어에게 업데이트 전송
+        const gameStateCopy = {
+            board: room.gameState.board.map(row => [...row]),
+            currentPlayer: room.gameState.currentPlayer,
+            moveHistory: [...room.gameState.moveHistory]
+        };
+        
+        console.log('moveUpdate 전송할 gameState:', JSON.stringify(gameStateCopy, null, 2));
+        
         room.players.forEach(player => {
             if (player.type === 'websocket') {
                 player.ws.send(JSON.stringify({
                     type: 'moveUpdate',
-                    gameState: room.gameState,
+                    gameState: gameStateCopy,
                     lastMove: { fromRow, fromCol, toRow, toCol, piece: movedPiece, captured: capturedPiece, special: specialType }
                 }));
             }
