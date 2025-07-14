@@ -565,6 +565,19 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         const piece = this.board[fromRow][fromCol];
         const capturedPiece = this.board[toRow][toCol];
         
+        // 온라인 모드에서는 내 턴일 때만 서버로 전송하고, 클라이언트에서는 이동을 실행하지 않음
+        if (this.gameMode === 'online-player') {
+            if (this.currentPlayer !== this.playerColor) {
+                console.log('내 턴이 아니므로 이동 무시');
+                return;
+            }
+            
+            console.log('온라인 모드 - 서버로 이동 전송');
+            this.sendMoveToServer(fromRow, fromCol, toRow, toCol, piece, capturedPiece, 'normal');
+            return; // 서버 응답을 기다리므로 여기서 종료
+        }
+        
+        // 로컬/AI 모드에서는 기존 로직 실행
         // 폰 승진 확인 (킹을 잡지 않은 경우에만)
         if (this.isPawnPromotion(toRow, toCol, piece) && !this.isKingCaptured(this.currentPlayer === 'white' ? 'black' : 'white')) {
             // 폰 승진 시에는 executeMove를 호출하지 않고 승진 다이얼로그에서 완전히 처리
@@ -599,12 +612,6 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         
         // 게임 종료 확인
         this.checkGameEnd();
-
-        // 온라인 모드라면 내 수를 서버로 전송 (폰 승진이 아닌 경우에만)
-        if (this.gameMode === 'online-player') {
-            console.log('온라인 모드 - 서버로 이동 전송');
-            this.sendMoveToServer(fromRow, fromCol, toRow, toCol, piece, capturedPiece, specialType);
-        }
     }
 
     executeMove(fromRow, fromCol, toRow, toCol, piece, capturedPiece, specialType = 'normal') {
@@ -3330,6 +3337,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                         
                         // 온라인 모드라면 승진 완료 후 서버에 전송
                         if (this.gameMode === 'online-player') {
+                            console.log('온라인 모드 - 폰 승진 서버 전송');
                             this.sendMoveToServer(fromRow, fromCol, row, col, piece, '', 'promotion');
                         }
                     });
