@@ -664,9 +664,8 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         console.log('이동 기록:', this.moveHistory);
         
         console.log('UI 업데이트 시작');
-        // 렌더링 스로틀링 우회를 위해 강제 렌더링
-        this.lastRenderTime = 0; // 스로틀링 리셋
-        this.renderBoard();
+        // 강제 렌더링 사용
+        this.forceRenderBoard();
         this.updateGameStatus();
         this.updateMoveHistory();
         if (this.updateCapturedPieces) this.updateCapturedPieces();
@@ -780,6 +779,44 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         this.renderBoard();
         this.updateGameStatus();
         this.updateMoveHistory();
+    }
+
+    forceRenderBoard() {
+        console.log('=== forceRenderBoard 호출됨 ===');
+        console.log('현재 보드 상태:', this.board);
+        
+        const chessboard = document.getElementById('chessboard');
+        if (!chessboard) {
+            console.error('체스보드 요소를 찾을 수 없음');
+            return;
+        }
+
+        console.log('강제 보드 렌더링 시작');
+        let html = '';
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                const piece = this.board[row][col];
+                const isLight = (row + col) % 2 === 0;
+                const squareClass = `square ${isLight ? 'white' : 'black'}`;
+                const pieceClass = piece ? 'piece' : '';
+                const selectedClass = this.selectedPiece && 
+                    this.selectedPiece.row === row && 
+                    this.selectedPiece.col === col ? 'selected' : '';
+                
+                html += `<div class="${squareClass} ${pieceClass} ${selectedClass}" data-row="${row}" data-col="${col}">${piece}</div>`;
+            }
+        }
+        
+        chessboard.innerHTML = html;
+        console.log('강제 보드 렌더링 완료');
+        console.log('생성된 HTML 길이:', html.length);
+        
+        // DOM 업데이트 확인
+        setTimeout(() => {
+            const squares = document.querySelectorAll('.square');
+            console.log('DOM 업데이트 확인 - 총 사각형 수:', squares.length);
+            console.log('첫 번째 사각형:', squares[0]);
+        }, 50);
     }
 
     renderBoard() {
@@ -3773,21 +3810,28 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 break;
                 
             case 'moveUpdate':
-                console.log('이동 업데이트 수신:', data);
-                // 항상 서버 상태를 반영 (캐슬링 등 특별한 이동도 서버에서 처리됨)
-                console.log('서버 상태 반영:', data.gameState);
+                console.log('=== moveUpdate 메시지 수신 ===');
+                console.log('받은 데이터:', data);
+                console.log('현재 보드 상태:', this.board);
                 
                 // 이전 보드 상태 저장 (시각적 효과를 위해)
                 const previousBoard = JSON.parse(JSON.stringify(this.board));
+                console.log('이전 보드 상태:', previousBoard);
                 
                 // 서버 상태 로드
                 this.loadGameState(data.gameState);
+                
+                // 강제로 보드 다시 렌더링
+                console.log('강제 보드 렌더링 시작');
+                this.forceRenderBoard();
                 
                 // lastMove 정보가 있으면 시각적 효과 추가
                 if (data.lastMove) {
                     console.log('시각적 효과 추가:', data.lastMove);
                     this.addMoveVisualEffect(data.lastMove, previousBoard);
                 }
+                
+                console.log('=== moveUpdate 처리 완료 ===');
                 break;
                 
             default:
@@ -3930,13 +3974,16 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         
         const { fromRow, fromCol, toRow, toCol, piece, captured, special } = lastMove;
         
-        // 렌더링 스로틀링 우회를 위해 강제 렌더링
+        // 강제 렌더링 사용
         console.log('보드 강제 업데이트 시작');
-        this.lastRenderTime = 0; // 스로틀링 리셋
-        this.renderBoard();
+        this.forceRenderBoard();
         
         // DOM 요소가 업데이트될 때까지 잠시 대기
         setTimeout(() => {
+            // 모든 사각형 요소 확인
+            const allSquares = document.querySelectorAll('.square');
+            console.log('총 사각형 수:', allSquares.length);
+            
             // 이동된 말에 하이라이트 효과 추가
             const fromSquare = document.querySelector(`[data-row="${fromRow}"][data-col="${fromCol}"]`);
             const toSquare = document.querySelector(`[data-row="${toRow}"][data-col="${toCol}"]`);
@@ -3947,6 +3994,23 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 fromSelector: `[data-row="${fromRow}"][data-col="${fromCol}"]`,
                 toSelector: `[data-row="${toRow}"][data-col="${toCol}"]`
             });
+            
+            // 대안 방법으로 DOM 요소 찾기
+            if (!fromSquare || !toSquare) {
+                console.log('대안 방법으로 DOM 요소 찾기 시도');
+                const chessboard = document.getElementById('chessboard');
+                if (chessboard) {
+                    const squares = chessboard.children;
+                    console.log('체스보드 자식 요소 수:', squares.length);
+                    
+                    for (let i = 0; i < squares.length; i++) {
+                        const square = squares[i];
+                        const row = square.getAttribute('data-row');
+                        const col = square.getAttribute('data-col');
+                        console.log(`사각형 ${i}: row=${row}, col=${col}`);
+                    }
+                }
+            }
             
             if (fromSquare) {
                 fromSquare.classList.add('move-from');
@@ -3968,7 +4032,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
             this.playPieceSound();
             
             console.log('시각적 효과 적용 완료');
-        }, 100);
+        }, 200); // 대기 시간 증가
     }
 
     sendMoveToServer(fromRow, fromCol, toRow, toCol, piece, capturedPiece, specialType = 'normal') {
