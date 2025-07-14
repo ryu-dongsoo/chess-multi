@@ -3882,14 +3882,25 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 
                 // 상세한 보드 상태 비교
                 console.log('상세한 보드 상태 비교:');
+                console.log('서버에서 받은 보드 상태 (JSON):', JSON.stringify(data.gameState.board));
+                console.log('현재 보드 상태 (JSON):', JSON.stringify(this.board));
+                
                 let hasChanges = false;
                 for (let row = 0; row < 8; row++) {
                     for (let col = 0; col < 8; col++) {
                         const before = previousBoard[row][col];
                         const after = this.board[row][col];
+                        const serverPiece = data.gameState.board[row][col];
+                        
+                        console.log(`[${row},${col}] - 이전: "${before}", 현재: "${after}", 서버: "${serverPiece}"`);
+                        
                         if (before !== after) {
                             console.log(`[${row},${col}] 변경됨: "${before}" -> "${after}"`);
                             hasChanges = true;
+                        }
+                        
+                        if (after !== serverPiece) {
+                            console.log(`[${row},${col}] 서버와 불일치: 클라이언트 "${after}" vs 서버 "${serverPiece}"`);
                         }
                     }
                 }
