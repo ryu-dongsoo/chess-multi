@@ -602,6 +602,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
 
         // 온라인 모드라면 내 수를 서버로 전송 (폰 승진이 아닌 경우에만)
         if (this.gameMode === 'online-player') {
+            console.log('온라인 모드 - 서버로 이동 전송');
             this.sendMoveToServer(fromRow, fromCol, toRow, toCol, piece, capturedPiece, specialType);
         }
     }
@@ -3865,6 +3866,8 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 console.log('=== moveUpdate 메시지 수신 ===');
                 console.log('받은 데이터:', data);
                 console.log('현재 보드 상태:', this.board);
+                console.log('내 플레이어 이름:', this.playerName);
+                console.log('lastMove 플레이어:', data.lastMove ? '서버에서 받은 이동' : '없음');
                 
                 // 이전 보드 상태 저장 (시각적 효과를 위해)
                 const previousBoard = JSON.parse(JSON.stringify(this.board));
@@ -3892,7 +3895,9 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 }
                 
                 if (!hasChanges) {
-                    console.log('보드 상태 변경 사항이 없음');
+                    console.log('보드 상태 변경 사항이 없음 - 강제 렌더링 시도');
+                    // 보드 상태가 변경되지 않았더라도 강제 렌더링
+                    this.forceRenderBoard();
                 }
                 
                 // 보드 상태가 다르면 강제로 다시 렌더링
