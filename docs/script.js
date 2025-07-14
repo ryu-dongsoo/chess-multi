@@ -3726,7 +3726,14 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 break;
                 
             case 'moveUpdate':
-                this.loadGameState(data.gameState);
+                console.log('이동 업데이트 수신:', data);
+                // 상대방의 이동을 시각적으로 처리
+                if (data.lastMove && data.lastMove.fromRow !== undefined) {
+                    this.handleOpponentMove(data.lastMove);
+                } else {
+                    // lastMove 정보가 없으면 전체 상태 로드
+                    this.loadGameState(data.gameState);
+                }
                 break;
                 
             default:
@@ -3736,6 +3743,8 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
 
     handleOpponentMove(data) {
         const { fromRow, fromCol, toRow, toCol, piece, capturedPiece, specialType } = data;
+        
+        console.log('상대방 이동 처리:', data);
         
         // 상대방의 이동을 보드에 반영
         this.board[toRow][toCol] = piece;
@@ -3758,7 +3767,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         });
         
         // 턴 변경
-            this.currentPlayer = this.currentPlayer === 'white' ? 'black' : 'white';
+        this.currentPlayer = this.currentPlayer === 'white' ? 'black' : 'white';
         
         // UI 업데이트
         this.renderBoard();
