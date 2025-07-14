@@ -459,12 +459,23 @@ function handleResign(ws, room) {
 // 간단한 이동 유효성 검사
 function isValidMove(board, fromRow, fromCol, toRow, toCol, color) {
     const piece = board[fromRow][fromCol];
-    if (!piece) return false;
+    if (!piece) {
+        console.log('이동 실패: 시작 위치에 말이 없음');
+        return false;
+    }
     
     // 기본적인 검사만 수행
-    return fromRow >= 0 && fromRow < 8 && fromCol >= 0 && fromCol < 8 &&
+    const isValid = fromRow >= 0 && fromRow < 8 && fromCol >= 0 && fromCol < 8 &&
            toRow >= 0 && toRow < 8 && toCol >= 0 && toCol < 8 &&
            (fromRow !== toRow || fromCol !== toCol);
+    
+    if (!isValid) {
+        console.log('이동 실패: 기본 검사 통과하지 못함');
+        return false;
+    }
+    
+    console.log(`이동 유효성 검사 통과: ${piece} ${fromRow},${fromCol} -> ${toRow},${toCol}`);
+    return true;
 }
 
 const PORT = process.env.PORT || 8080;
