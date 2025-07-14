@@ -3731,13 +3731,8 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 
             case 'moveUpdate':
                 console.log('이동 업데이트 수신:', data);
-                // 상대방의 이동을 시각적으로 처리
-                if (data.lastMove && data.lastMove.fromRow !== undefined) {
-                    this.handleOpponentMove(data.lastMove);
-                } else {
-                    // lastMove 정보가 없으면 전체 상태 로드
-                    this.loadGameState(data.gameState);
-                }
+                // 항상 서버 상태를 반영
+                this.loadGameState(data.gameState);
                 break;
                 
             default:
@@ -3770,11 +3765,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
             special: specialType
         });
         
-        // 턴 변경
-        const oldPlayer = this.currentPlayer;
-        this.currentPlayer = this.currentPlayer === 'white' ? 'black' : 'white';
-        console.log(`턴 변경: ${oldPlayer} -> ${this.currentPlayer}`);
-        
+        // 턴 변경 코드 삭제!
         // UI 업데이트
         this.renderBoard();
         this.updateGameStatus();
