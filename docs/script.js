@@ -3740,18 +3740,9 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 
             case 'moveUpdate':
                 console.log('이동 업데이트 수신:', data);
-                // lastMove 정보가 있으면 시각적 이동 효과 적용
-                if (data.lastMove && data.lastMove.fromRow !== undefined) {
-                    console.log('시각적 이동 효과 적용:', data.lastMove);
-                    this.handleOpponentMove(data.lastMove);
-                    // 서버 상태로 턴 동기화
-                    this.currentPlayer = data.gameState.currentPlayer;
-                    console.log('서버 턴 정보 반영:', this.currentPlayer);
-                } else {
-                    // lastMove 정보가 없으면 전체 상태 로드
-                    console.log('전체 상태 로드');
-                    this.loadGameState(data.gameState);
-                }
+                // 항상 서버 상태를 반영 (캐슬링 등 특별한 이동도 서버에서 처리됨)
+                console.log('서버 상태 반영:', data.gameState);
+                this.loadGameState(data.gameState);
                 break;
                 
             default:
@@ -3768,11 +3759,13 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         this.board[toRow][toCol] = piece;
         this.board[fromRow][fromCol] = '';
         
-        // 특별한 이동 처리
-        if (specialType === 'kingside-castling' || specialType === 'queenside-castling') {
-            this.executeCastling(fromRow, fromCol, toRow, toCol);
-        } else if (specialType === 'en-passant') {
-            this.executeEnPassant(fromRow, fromCol, toRow, toCol);
+        // 특별한 이동 처리 (온라인 모드에서는 서버 상태를 신뢰하므로 건너뜀)
+        if (this.gameMode !== 'online-player') {
+            if (specialType === 'kingside-castling' || specialType === 'queenside-castling') {
+                this.executeCastling(fromRow, fromCol, toRow, toCol);
+            } else if (specialType === 'en-passant') {
+                this.executeEnPassant(fromRow, fromCol, toRow, toCol);
+            }
         }
         
         // 이동 기록에 추가
