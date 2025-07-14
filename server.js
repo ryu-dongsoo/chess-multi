@@ -75,7 +75,7 @@ const wss = new WebSocket.Server({
     clientTracking: true
 });
 
-// 연결 상태 모니터링
+// 연결 상태 모니터링 (더 자주 체크)
 const interval = setInterval(() => {
     wss.clients.forEach((ws) => {
         if (ws.isAlive === false) {
@@ -86,7 +86,7 @@ const interval = setInterval(() => {
         ws.isAlive = false;
         ws.ping();
     });
-}, 30000);
+}, 15000); // 15초마다 체크 (기존 30초에서 단축)
 
 wss.on('close', () => {
     clearInterval(interval);

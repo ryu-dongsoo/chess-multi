@@ -3771,6 +3771,9 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         this.ws.onopen = () => {
             console.log('WebSocket 연결 성공');
             this.updateConnectionStatus('연결됨', true);
+            // 연결 성공 시 재연결 시도 초기화
+            this.reconnectAttempts = 0;
+            this.reconnectTimer = null;
         };
         
         this.ws.onmessage = (event) => {
@@ -3782,15 +3785,43 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
             }
         };
         
-        this.ws.onclose = () => {
-            console.log('WebSocket 연결 종료');
+        this.ws.onclose = (event) => {
+            console.log('WebSocket 연결 종료:', event.code, event.reason);
             this.updateConnectionStatus('연결 끊김', false);
+            
+            // 자동 재연결 시도 (정상적인 종료가 아닌 경우)
+            if (event.code !== 1000 && this.gameMode === 'online-player') {
+                this.scheduleReconnect();
+            }
         };
         
         this.ws.onerror = (error) => {
             console.error('WebSocket 오류:', error);
             this.updateConnectionStatus('연결 오류', false);
         };
+    }
+
+    // 자동 재연결 스케줄링
+    scheduleReconnect() {
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+        }
+        
+        this.reconnectAttempts = (this.reconnectAttempts || 0) + 1;
+        const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts - 1), 30000); // 최대 30초
+        
+        console.log(`재연결 시도 ${this.reconnectAttempts} (${delay}ms 후)`);
+        this.updateConnectionStatus(`재연결 시도 중... (${this.reconnectAttempts})`, false);
+        
+        this.reconnectTimer = setTimeout(() => {
+            if (this.gameMode === 'online-player' && this.reconnectAttempts < 10) {
+                console.log('자동 재연결 시도...');
+                this.connectToWebSocket(this.roomId, this.playerName);
+            } else {
+                console.log('재연결 시도 횟수 초과 또는 게임 모드 변경됨');
+                this.updateConnectionStatus('연결 실패 - 새로고침 필요', false);
+            }
+        }, delay);
     }
 
     // WebSocket 메시지 처리 (간단한 권위 서버 모델)
