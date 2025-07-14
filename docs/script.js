@@ -638,15 +638,21 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
     }
 
     loadGameState(gameState) {
+        console.log('=== loadGameState 호출됨 ===');
+        console.log('받은 gameState:', gameState);
+        
         // 서버/상대방에서 받은 상태를 정확히 반영
         if (gameState.board) {
+            console.log('보드 상태 업데이트 전:', this.board);
             this.board = JSON.parse(JSON.stringify(gameState.board));
+            console.log('보드 상태 업데이트 후:', this.board);
         }
         if (gameState.currentPlayer) {
             console.log(`서버에서 턴 정보 로드: ${this.currentPlayer} -> ${gameState.currentPlayer}`);
             this.currentPlayer = gameState.currentPlayer;
         }
         if (gameState.moveHistory) {
+            console.log('이동 기록 업데이트:', gameState.moveHistory);
             this.moveHistory = JSON.parse(JSON.stringify(gameState.moveHistory));
         }
         
@@ -657,10 +663,14 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         console.log('내 색상:', this.playerColor);
         console.log('이동 기록:', this.moveHistory);
         
+        console.log('UI 업데이트 시작');
+        // 렌더링 스로틀링 우회를 위해 강제 렌더링
+        this.lastRenderTime = 0; // 스로틀링 리셋
         this.renderBoard();
         this.updateGameStatus();
         this.updateMoveHistory();
         if (this.updateCapturedPieces) this.updateCapturedPieces();
+        console.log('UI 업데이트 완료');
     }
 
     setPlayerColor(color) {
@@ -773,15 +783,23 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
     }
 
     renderBoard() {
+        console.log('=== renderBoard 호출됨 ===');
+        console.log('현재 보드 상태:', this.board);
+        
         const now = Date.now();
         if (now - this.lastRenderTime < this.renderThrottle) {
+            console.log('렌더링 스로틀링으로 인해 건너뜀');
             return; // 렌더링 스로틀링
         }
         this.lastRenderTime = now;
 
         const chessboard = document.getElementById('chessboard');
-        if (!chessboard) return;
+        if (!chessboard) {
+            console.error('체스보드 요소를 찾을 수 없음');
+            return;
+        }
 
+        console.log('보드 렌더링 시작');
         let html = '';
         for (let row = 0; row < 8; row++) {
             for (let col = 0; col < 8; col++) {
@@ -798,6 +816,8 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         }
         
         chessboard.innerHTML = html;
+        console.log('보드 렌더링 완료');
+        console.log('생성된 HTML 길이:', html.length);
     }
 
     updateMoveHistory() {
@@ -3906,27 +3926,49 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         console.log('=== 시각적 효과 추가 ===');
         console.log('마지막 이동:', lastMove);
         console.log('이전 보드:', previousBoard);
+        console.log('현재 보드:', this.board);
         
         const { fromRow, fromCol, toRow, toCol, piece, captured, special } = lastMove;
         
-        // 이동된 말에 하이라이트 효과 추가
-        const fromSquare = document.querySelector(`[data-row="${fromRow}"][data-col="${fromCol}"]`);
-        const toSquare = document.querySelector(`[data-row="${toRow}"][data-col="${toCol}"]`);
+        // 렌더링 스로틀링 우회를 위해 강제 렌더링
+        console.log('보드 강제 업데이트 시작');
+        this.lastRenderTime = 0; // 스로틀링 리셋
+        this.renderBoard();
         
-        if (fromSquare) {
-            fromSquare.classList.add('move-from');
-            setTimeout(() => fromSquare.classList.remove('move-from'), 1000);
-        }
-        
-        if (toSquare) {
-            toSquare.classList.add('move-to');
-            setTimeout(() => toSquare.classList.remove('move-to'), 1000);
-        }
-        
-        // 사운드 재생
-        this.playPieceSound();
-        
-        console.log('시각적 효과 적용 완료');
+        // DOM 요소가 업데이트될 때까지 잠시 대기
+        setTimeout(() => {
+            // 이동된 말에 하이라이트 효과 추가
+            const fromSquare = document.querySelector(`[data-row="${fromRow}"][data-col="${fromCol}"]`);
+            const toSquare = document.querySelector(`[data-row="${toRow}"][data-col="${toCol}"]`);
+            
+            console.log('DOM 요소 찾기:', {
+                fromSquare: fromSquare,
+                toSquare: toSquare,
+                fromSelector: `[data-row="${fromRow}"][data-col="${fromCol}"]`,
+                toSelector: `[data-row="${toRow}"][data-col="${toCol}"]`
+            });
+            
+            if (fromSquare) {
+                fromSquare.classList.add('move-from');
+                console.log('출발점 하이라이트 추가');
+                setTimeout(() => fromSquare.classList.remove('move-from'), 1000);
+            } else {
+                console.error('출발점 DOM 요소를 찾을 수 없음');
+            }
+            
+            if (toSquare) {
+                toSquare.classList.add('move-to');
+                console.log('도착점 하이라이트 추가');
+                setTimeout(() => toSquare.classList.remove('move-to'), 1000);
+            } else {
+                console.error('도착점 DOM 요소를 찾을 수 없음');
+            }
+            
+            // 사운드 재생
+            this.playPieceSound();
+            
+            console.log('시각적 효과 적용 완료');
+        }, 100);
     }
 
     sendMoveToServer(fromRow, fromCol, toRow, toCol, piece, capturedPiece, specialType = 'normal') {
