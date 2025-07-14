@@ -644,8 +644,30 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         // 서버/상대방에서 받은 상태를 정확히 반영
         if (gameState.board) {
             console.log('보드 상태 업데이트 전:', this.board);
-            this.board = JSON.parse(JSON.stringify(gameState.board));
+            console.log('서버에서 받은 보드:', gameState.board);
+            
+            // 깊은 복사로 보드 상태 업데이트
+            this.board = [];
+            for (let row = 0; row < 8; row++) {
+                this.board[row] = [];
+                for (let col = 0; col < 8; col++) {
+                    this.board[row][col] = gameState.board[row][col];
+                }
+            }
+            
             console.log('보드 상태 업데이트 후:', this.board);
+            
+            // 보드 상태 검증
+            let isValid = true;
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    if (this.board[row][col] !== gameState.board[row][col]) {
+                        console.error(`보드 상태 불일치: [${row},${col}] - 예상: "${gameState.board[row][col]}", 실제: "${this.board[row][col]}"`);
+                        isValid = false;
+                    }
+                }
+            }
+            console.log('보드 상태 검증 결과:', isValid ? '성공' : '실패');
         }
         if (gameState.currentPlayer) {
             console.log(`서버에서 턴 정보 로드: ${this.currentPlayer} -> ${gameState.currentPlayer}`);
@@ -811,12 +833,32 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         console.log('강제 보드 렌더링 완료');
         console.log('생성된 HTML 길이:', html.length);
         
-        // DOM 업데이트 확인
+        // DOM 업데이트 확인 및 검증
         setTimeout(() => {
             const squares = document.querySelectorAll('.square');
             console.log('DOM 업데이트 확인 - 총 사각형 수:', squares.length);
-            console.log('첫 번째 사각형:', squares[0]);
-        }, 50);
+            
+            // 렌더링 결과 검증
+            let renderSuccess = true;
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                    const expectedPiece = this.board[row][col];
+                    const actualPiece = square ? square.textContent : '';
+                    
+                    if (actualPiece !== expectedPiece) {
+                        console.error(`렌더링 불일치: [${row},${col}] - 예상: "${expectedPiece}", 실제: "${actualPiece}"`);
+                        renderSuccess = false;
+                    }
+                }
+            }
+            console.log('렌더링 검증 결과:', renderSuccess ? '성공' : '실패');
+            
+            if (!renderSuccess) {
+                console.log('렌더링 재시도...');
+                this.forceRenderBoard();
+            }
+        }, 100);
     }
 
     renderBoard() {
@@ -3821,9 +3863,32 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 // 서버 상태 로드
                 this.loadGameState(data.gameState);
                 
-                // 강제로 보드 다시 렌더링
-                console.log('강제 보드 렌더링 시작');
-                this.forceRenderBoard();
+                // 보드 상태가 실제로 변경되었는지 확인
+                console.log('서버에서 받은 보드 상태:', data.gameState.board);
+                console.log('업데이트 후 보드 상태:', this.board);
+                
+                // 보드 상태가 다르면 강제로 다시 렌더링
+                if (JSON.stringify(this.board) !== JSON.stringify(previousBoard)) {
+                    console.log('보드 상태가 변경됨 - 강제 렌더링');
+                    this.forceRenderBoard();
+                    
+                    // 렌더링 후 실제 DOM 상태 확인
+                    setTimeout(() => {
+                        const chessboard = document.getElementById('chessboard');
+                        if (chessboard) {
+                            console.log('렌더링 후 DOM 상태 확인:');
+                            for (let row = 0; row < 8; row++) {
+                                for (let col = 0; col < 8; col++) {
+                                    const square = chessboard.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                                    const piece = square ? square.textContent : '';
+                                    console.log(`[${row},${col}]: "${piece}" (보드: "${this.board[row][col]}")`);
+                                }
+                            }
+                        }
+                    }, 100);
+                } else {
+                    console.log('보드 상태가 변경되지 않음');
+                }
                 
                 // lastMove 정보가 있으면 시각적 효과 추가
                 if (data.lastMove) {
