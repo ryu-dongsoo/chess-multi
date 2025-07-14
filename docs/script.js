@@ -3666,6 +3666,10 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
     }
 
     connectToWebSocket(roomId, playerName) {
+        console.log('=== connectToWebSocket 호출됨 ===');
+        console.log('roomId:', roomId);
+        console.log('playerName:', playerName);
+        
         this.roomId = roomId;
         this.playerName = playerName;
         this.gameMode = 'online-player';
@@ -3676,30 +3680,40 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
         const wsUrl = `${protocol}//${host}:${port}?roomId=${roomId}&playerName=${encodeURIComponent(playerName)}`;
         
-        console.log('WebSocket 연결 시도:', wsUrl);
+        console.log('🌐 WebSocket 연결 시도:', wsUrl);
+        console.log('프로토콜:', protocol);
+        console.log('호스트:', host);
+        console.log('포트:', port);
+        
         this.ws = new WebSocket(wsUrl);
         
         this.ws.onopen = () => {
-            console.log('WebSocket 연결 성공');
+            console.log('✅ WebSocket 연결 성공');
+            console.log('WebSocket 상태:', this.ws.readyState);
             this.updateConnectionStatus('연결됨', true);
         };
         
         this.ws.onmessage = (event) => {
+            console.log('📨 WebSocket 메시지 수신:', event.data);
             try {
                 const data = JSON.parse(event.data);
+                console.log('📨 파싱된 메시지:', data);
                 this.handleWebSocketMessage(data);
             } catch (error) {
-                console.error('WebSocket 메시지 파싱 오류:', error);
+                console.error('❌ WebSocket 메시지 파싱 오류:', error);
+                console.error('원본 메시지:', event.data);
             }
         };
         
-        this.ws.onclose = () => {
-            console.log('WebSocket 연결 종료');
+        this.ws.onclose = (event) => {
+            console.log('🔌 WebSocket 연결 종료');
+            console.log('종료 코드:', event.code);
+            console.log('종료 이유:', event.reason);
             this.updateConnectionStatus('연결 끊김', false);
         };
         
         this.ws.onerror = (error) => {
-            console.error('WebSocket 오류:', error);
+            console.error('❌ WebSocket 오류:', error);
             this.updateConnectionStatus('연결 오류', false);
         };
     }
@@ -3878,8 +3892,23 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
     }
 
     sendMoveToServer(fromRow, fromCol, toRow, toCol, piece, capturedPiece, specialType = 'normal') {
-        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-            console.error('WebSocket이 연결되지 않았습니다.');
+        console.log('=== sendMoveToServer 호출됨 ===');
+        console.log('WebSocket 상태:', this.ws ? this.ws.readyState : 'null');
+        console.log('WebSocket.OPEN:', WebSocket.OPEN);
+        console.log('연결됨:', this.ws && this.ws.readyState === WebSocket.OPEN);
+        
+        if (!this.ws) {
+            console.error('❌ WebSocket 객체가 없습니다.');
+            return;
+        }
+        
+        if (this.ws.readyState !== WebSocket.OPEN) {
+            console.error('❌ WebSocket이 연결되지 않았습니다. 상태:', this.ws.readyState);
+            console.log('상태 설명:');
+            console.log('0 = CONNECTING');
+            console.log('1 = OPEN');
+            console.log('2 = CLOSING');
+            console.log('3 = CLOSED');
             return;
         }
         
@@ -3896,8 +3925,15 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
             specialType: specialType
         };
         
-        console.log('서버로 이동 전송:', moveData);
-        this.ws.send(JSON.stringify(moveData));
+        console.log('✅ 서버로 이동 전송:', moveData);
+        console.log('JSON 문자열:', JSON.stringify(moveData));
+        
+        try {
+            this.ws.send(JSON.stringify(moveData));
+            console.log('✅ 메시지 전송 성공');
+        } catch (error) {
+            console.error('❌ 메시지 전송 실패:', error);
+        }
     }
 
     findAvailableRoom(playerName) {
