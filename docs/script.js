@@ -565,7 +565,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         const piece = this.board[fromRow][fromCol];
         const capturedPiece = this.board[toRow][toCol];
         
-        // 온라인 모드에서는 내 턴일 때만 서버로 전송하고, 클라이언트에서는 이동을 실행하지 않음
+        // 온라인 모드에서는 내 턴일 때만 서버로 전송하고, 즉시 시각적 피드백 제공
         if (this.gameMode === 'online-player') {
             if (this.currentPlayer !== this.playerColor) {
                 console.log('내 턴이 아니므로 이동 무시');
@@ -574,7 +574,16 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
             
             console.log('온라인 모드 - 서버로 이동 전송');
             this.sendMoveToServer(fromRow, fromCol, toRow, toCol, piece, capturedPiece, 'normal');
-            return; // 서버 응답을 기다리므로 여기서 종료
+            
+            // 즉시 시각적 피드백 제공 (서버 응답으로 나중에 동기화됨)
+            this.executeMove(fromRow, fromCol, toRow, toCol, piece, capturedPiece, 'normal');
+            this.clearSelection();
+            this.playPieceSound();
+            this.updateGameStatus();
+            this.updateMoveHistory();
+            this.updateCapturedPieces();
+            this.checkGameEnd();
+            return;
         }
         
         // 로컬/AI 모드에서는 기존 로직 실행
@@ -646,10 +655,19 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
     }
 
     loadGameState(gameState) {
+        console.log('=== loadGameState 호출됨 ===');
+        console.log('서버에서 받은 gameState:', gameState);
+        
         // 서버에서 받은 상태를 완전히 신뢰하고 반영
         this.board = gameState.board.map(row => [...row]);
         this.currentPlayer = gameState.currentPlayer;
         this.moveHistory = Array.isArray(gameState.moveHistory) ? [...gameState.moveHistory] : [];
+        
+        console.log('상태 로드 완료:');
+        console.log('보드:', this.board);
+        console.log('현재 플레이어:', this.currentPlayer);
+        console.log('내 색상:', this.playerColor);
+        
         // UI 및 상태 갱신
         this.forceRenderBoard();
         this.updateGameStatus();
@@ -657,6 +675,8 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         if (this.updateCapturedPieces) this.updateCapturedPieces();
         this.clearSelection();
         this.checkGameEnd();
+        
+        console.log('=== loadGameState 완료 ===');
     }
 
     setPlayerColor(color) {
