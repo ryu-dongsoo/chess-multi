@@ -178,6 +178,29 @@ main {
     transform: scale(1.1);
 }
 
+/* 이동 시각적 효과 */
+.square.move-from {
+    background-color: #FFD700 !important;
+    animation: moveFrom 0.5s ease-in-out;
+}
+
+.square.move-to {
+    background-color: #90EE90 !important;
+    animation: moveTo 0.5s ease-in-out;
+}
+
+@keyframes moveFrom {
+    0% { background-color: #FFD700; }
+    50% { background-color: #FFA500; }
+    100% { background-color: #FFD700; }
+}
+
+@keyframes moveTo {
+    0% { background-color: #90EE90; }
+    50% { background-color: #32CD32; }
+    100% { background-color: #90EE90; }
+}
+
 /* 컨트롤 패널 */
 .controls {
     background: rgba(255, 255, 255, 0.95);

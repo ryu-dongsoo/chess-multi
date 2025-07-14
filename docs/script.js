@@ -3756,7 +3756,18 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 console.log('이동 업데이트 수신:', data);
                 // 항상 서버 상태를 반영 (캐슬링 등 특별한 이동도 서버에서 처리됨)
                 console.log('서버 상태 반영:', data.gameState);
+                
+                // 이전 보드 상태 저장 (시각적 효과를 위해)
+                const previousBoard = JSON.parse(JSON.stringify(this.board));
+                
+                // 서버 상태 로드
                 this.loadGameState(data.gameState);
+                
+                // lastMove 정보가 있으면 시각적 효과 추가
+                if (data.lastMove) {
+                    console.log('시각적 효과 추가:', data.lastMove);
+                    this.addMoveVisualEffect(data.lastMove, previousBoard);
+                }
                 break;
                 
             default:
@@ -3889,6 +3900,33 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 }
             }
         }
+    }
+
+    addMoveVisualEffect(lastMove, previousBoard) {
+        console.log('=== 시각적 효과 추가 ===');
+        console.log('마지막 이동:', lastMove);
+        console.log('이전 보드:', previousBoard);
+        
+        const { fromRow, fromCol, toRow, toCol, piece, captured, special } = lastMove;
+        
+        // 이동된 말에 하이라이트 효과 추가
+        const fromSquare = document.querySelector(`[data-row="${fromRow}"][data-col="${fromCol}"]`);
+        const toSquare = document.querySelector(`[data-row="${toRow}"][data-col="${toCol}"]`);
+        
+        if (fromSquare) {
+            fromSquare.classList.add('move-from');
+            setTimeout(() => fromSquare.classList.remove('move-from'), 1000);
+        }
+        
+        if (toSquare) {
+            toSquare.classList.add('move-to');
+            setTimeout(() => toSquare.classList.remove('move-to'), 1000);
+        }
+        
+        // 사운드 재생
+        this.playPieceSound();
+        
+        console.log('시각적 효과 적용 완료');
     }
 
     sendMoveToServer(fromRow, fromCol, toRow, toCol, piece, capturedPiece, specialType = 'normal') {
