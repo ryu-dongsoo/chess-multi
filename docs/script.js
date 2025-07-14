@@ -646,6 +646,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         console.log('상태 로드 완료:');
         console.log('보드:', this.board);
         console.log('현재 플레이어:', this.currentPlayer);
+        console.log('내 색상:', this.playerColor);
         console.log('이동 기록:', this.moveHistory);
         
         this.renderBoard();
