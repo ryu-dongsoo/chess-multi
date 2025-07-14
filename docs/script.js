@@ -646,86 +646,17 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
     }
 
     loadGameState(gameState) {
-        console.log('=== loadGameState 호출됨 ===');
-        console.log('받은 gameState:', gameState);
-        
-        // 서버/상대방에서 받은 상태를 정확히 반영
-        if (gameState.board) {
-            console.log('보드 상태 업데이트 전:', this.board);
-            console.log('서버에서 받은 보드:', gameState.board);
-            
-            // 보드 상태 비교 (업데이트 전)
-            console.log('업데이트 전 보드 상태 비교:');
-            for (let row = 0; row < 8; row++) {
-                for (let col = 0; col < 8; col++) {
-                    if (this.board[row][col] !== gameState.board[row][col]) {
-                        console.log(`[${row},${col}] 변경됨: "${this.board[row][col]}" -> "${gameState.board[row][col]}"`);
-                    }
-                }
-            }
-            
-            // 깊은 복사로 보드 상태 업데이트
-            this.board = [];
-            for (let row = 0; row < 8; row++) {
-                this.board[row] = [];
-                for (let col = 0; col < 8; col++) {
-                    this.board[row][col] = gameState.board[row][col];
-                }
-            }
-            
-            console.log('보드 상태 업데이트 후:', this.board);
-            
-            // 보드 상태 검증
-            let isValid = true;
-            for (let row = 0; row < 8; row++) {
-                for (let col = 0; col < 8; col++) {
-                    if (this.board[row][col] !== gameState.board[row][col]) {
-                        console.error(`보드 상태 불일치: [${row},${col}] - 예상: "${gameState.board[row][col]}", 실제: "${this.board[row][col]}"`);
-                        isValid = false;
-                    }
-                }
-            }
-            console.log('보드 상태 검증 결과:', isValid ? '성공' : '실패');
-        }
-        if (gameState.currentPlayer) {
-            console.log(`서버에서 턴 정보 로드: ${this.currentPlayer} -> ${gameState.currentPlayer}`);
-            this.currentPlayer = gameState.currentPlayer;
-        }
-        if (gameState.moveHistory) {
-            console.log('이동 기록 업데이트:', gameState.moveHistory);
-            this.moveHistory = JSON.parse(JSON.stringify(gameState.moveHistory));
-        }
-        
-        // 보드 상태 디버깅
-        console.log('상태 로드 완료:');
-        console.log('보드:', this.board);
-        console.log('현재 플레이어:', this.currentPlayer);
-        console.log('내 색상:', this.playerColor);
-        console.log('이동 기록:', this.moveHistory);
-        
-        console.log('UI 업데이트 시작');
-        // 강제 렌더링 사용
+        // 서버에서 받은 상태를 완전히 신뢰하고 반영
+        this.board = gameState.board.map(row => [...row]);
+        this.currentPlayer = gameState.currentPlayer;
+        this.moveHistory = Array.isArray(gameState.moveHistory) ? [...gameState.moveHistory] : [];
+        // UI 및 상태 갱신
         this.forceRenderBoard();
         this.updateGameStatus();
         this.updateMoveHistory();
         if (this.updateCapturedPieces) this.updateCapturedPieces();
-        console.log('UI 업데이트 완료');
-        // 디버깅: 렌더 직후 DOM 상태 확인
-        setTimeout(() => {
-            const chessboard = document.getElementById('chessboard');
-            if (chessboard) {
-                let domState = [];
-                for (let row = 0; row < 8; row++) {
-                    let rowStr = '';
-                    for (let col = 0; col < 8; col++) {
-                        const square = chessboard.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                        rowStr += square ? square.textContent : '.';
-                    }
-                    domState.push(rowStr);
-                }
-                console.log('[loadGameState] 렌더 직후 DOM 상태:', domState);
-            }
-        }, 100);
+        this.clearSelection();
+        this.checkGameEnd();
     }
 
     setPlayerColor(color) {
@@ -3835,36 +3766,23 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 console.log('플레이어 색상 할당:', data.color);
                 this.updateConnectionStatus('게임 대기 중...', true);
                 break;
-                
             case 'gameStart':
                 this.playerColor = data.playerColor;
                 this.loadGameState(data.gameState);
                 console.log('게임 시작! 내 색상:', data.playerColor);
                 this.updateConnectionStatus('게임 진행 중', true);
                 break;
-                
             case 'moveUpdate':
                 // 서버 상태를 완전히 신뢰하고 적용
-                console.log('[moveUpdate] 받은 gameState.board:', data.gameState.board);
                 this.loadGameState(data.gameState);
-                console.log('[moveUpdate] loadGameState 적용 후 this.board:', this.board);
-                this.renderBoard();
-                this.updateGameStatus();
-                this.updateMoveHistory();
-                this.updateCapturedPieces();
-                this.clearSelection();
-                this.checkGameEnd();
                 break;
-                
             case 'gameOver':
                 this.endGame(data.result, data.winner, data.loser);
                 break;
-                
             case 'error':
                 console.error('서버 오류:', data.message);
                 this.updateConnectionStatus(`오류: ${data.message}`, false);
                 break;
-                
             default:
                 console.log('알 수 없는 메시지 타입:', data.type);
         }
