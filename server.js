@@ -405,6 +405,12 @@ function handleMove(ws, data, room) {
         room.gameState.board[toRow][toCol] = movedPiece;
         room.gameState.board[fromRow][fromCol] = '';
         
+        // 이동 실행 후 보드 상태 로깅
+        console.log('이동 실행 후 보드 상태:');
+        room.gameState.board.forEach((row, i) => {
+            console.log(i + ': ' + row.join(''));
+        });
+        
         // 플레이어 변경
         room.gameState.currentPlayer = room.gameState.currentPlayer === 'white' ? 'black' : 'white';
         
@@ -417,9 +423,6 @@ function handleMove(ws, data, room) {
             special: specialType || 'normal'
         });
         
-        console.log('이동 후 보드 상태:', room.gameState.board);
-        console.log('새로운 턴:', room.gameState.currentPlayer);
-        
         // 모든 플레이어에게 업데이트 전송
         const gameStateCopy = {
             board: room.gameState.board.map(row => [...row]),
@@ -427,7 +430,10 @@ function handleMove(ws, data, room) {
             moveHistory: [...room.gameState.moveHistory]
         };
         
-        console.log('moveUpdate 전송할 gameState:', JSON.stringify(gameStateCopy, null, 2));
+        console.log('moveUpdate 전송할 board:');
+        gameStateCopy.board.forEach((row, i) => {
+            console.log(i + ': ' + row.join(''));
+        });
         
         room.players.forEach(player => {
             if (player.type === 'websocket') {
