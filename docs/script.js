@@ -3740,15 +3740,9 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 
             case 'moveUpdate':
                 console.log('이동 업데이트 수신:', data);
-                // lastMove 정보가 있으면 시각적 이동 효과 적용
-                if (data.lastMove && data.lastMove.fromRow !== undefined) {
-                    console.log('시각적 이동 효과 적용:', data.lastMove);
-                    this.handleOpponentMove(data.lastMove);
-                } else {
-                    // lastMove 정보가 없으면 전체 상태 로드
-                    console.log('전체 상태 로드');
-                    this.loadGameState(data.gameState);
-                }
+                // 항상 서버 상태를 반영 (턴 동기화 보장)
+                console.log('서버 상태 반영:', data.gameState);
+                this.loadGameState(data.gameState);
                 break;
                 
             default:
@@ -3781,9 +3775,8 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
             special: specialType
         });
         
-        // 턴 변경 (시각적 효과를 위해)
-        this.currentPlayer = this.currentPlayer === 'white' ? 'black' : 'white';
-        console.log(`턴 변경: ${this.currentPlayer === 'white' ? 'black' : 'white'} -> ${this.currentPlayer}`);
+        // 턴 변경 제거 - 서버 상태만 신뢰
+        console.log('서버에서 턴 정보를 받을 때까지 대기');
         
         // UI 업데이트
         this.renderBoard();
