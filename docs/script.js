@@ -3786,11 +3786,11 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         this.playerName = playerName;
         this.gameMode = 'online-player';
         
-        // 동적 URL 설정
+        // 동적 URL 설정 (Railway 배포 환경 대응)
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const host = window.location.hostname;
-        const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
-        const wsUrl = `${protocol}//${host}:${port}?roomId=${roomId}&playerName=${encodeURIComponent(playerName)}`;
+        // Railway에서는 포트를 URL에 포함하지 않음
+        const wsUrl = `${protocol}//${host}?roomId=${roomId}&playerName=${encodeURIComponent(playerName)}`;
         
         console.log('WebSocket URL:', wsUrl);
         
