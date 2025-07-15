@@ -658,25 +658,40 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         console.log('=== loadGameState 호출됨 ===');
         console.log('서버에서 받은 gameState:', gameState);
         
-        // 서버에서 받은 상태를 완전히 신뢰하고 반영
-        this.board = gameState.board.map(row => [...row]);
-        this.currentPlayer = gameState.currentPlayer;
-        this.moveHistory = Array.isArray(gameState.moveHistory) ? [...gameState.moveHistory] : [];
-        
-        console.log('상태 로드 완료:');
-        console.log('보드:', this.board);
-        console.log('현재 플레이어:', this.currentPlayer);
-        console.log('내 색상:', this.playerColor);
-        
-        // UI 및 상태 갱신
-        this.forceRenderBoard();
-        this.updateGameStatus();
-        this.updateMoveHistory();
-        if (this.updateCapturedPieces) this.updateCapturedPieces();
-        this.clearSelection();
-        this.checkGameEnd();
-        
-        console.log('=== loadGameState 완료 ===');
+        try {
+            // 서버에서 받은 상태를 완전히 신뢰하고 반영
+            console.log('보드 상태 업데이트 시작...');
+            this.board = gameState.board.map(row => [...row]);
+            console.log('보드 상태 업데이트 완료:', this.board);
+            
+            console.log('현재 플레이어 업데이트 시작...');
+            this.currentPlayer = gameState.currentPlayer;
+            console.log('현재 플레이어 업데이트 완료:', this.currentPlayer);
+            
+            console.log('이동 기록 업데이트 시작...');
+            this.moveHistory = Array.isArray(gameState.moveHistory) ? [...gameState.moveHistory] : [];
+            console.log('이동 기록 업데이트 완료:', this.moveHistory);
+            
+            console.log('상태 로드 완료:');
+            console.log('보드:', this.board);
+            console.log('현재 플레이어:', this.currentPlayer);
+            console.log('내 색상:', this.playerColor);
+            
+            // UI 및 상태 갱신
+            console.log('UI 업데이트 시작...');
+            this.forceRenderBoard();
+            this.updateGameStatus();
+            this.updateMoveHistory();
+            if (this.updateCapturedPieces) this.updateCapturedPieces();
+            this.clearSelection();
+            this.checkGameEnd();
+            console.log('UI 업데이트 완료');
+            
+            console.log('=== loadGameState 완료 ===');
+        } catch (error) {
+            console.error('loadGameState 내부 오류:', error);
+            throw error;
+        }
     }
 
     setPlayerColor(color) {
@@ -3817,7 +3832,13 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 console.log('현재 this.board (적용 전):', this.board);
                 console.log('현재 this.currentPlayer (적용 전):', this.currentPlayer);
                 
-                this.loadGameState(data.gameState);
+                try {
+                    console.log('loadGameState 호출 시작...');
+                    this.loadGameState(data.gameState);
+                    console.log('loadGameState 호출 완료');
+                } catch (error) {
+                    console.error('loadGameState 호출 중 오류 발생:', error);
+                }
                 
                 console.log('=== moveUpdate 메시지 처리 완료 ===');
                 break;
