@@ -791,6 +791,22 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
     forceRenderBoard() {
         console.log('[forceRenderBoard] 호출, 현재 보드:', this.board);
         this.renderBoard();
+        
+        // 렌더링 후 DOM 상태 확인
+        setTimeout(() => {
+            const chessboard = document.getElementById('chessboard');
+            if (chessboard) {
+                console.log('[forceRenderBoard] 렌더링 후 DOM 상태:');
+                for (let row = 0; row < 8; row++) {
+                    let rowStr = '';
+                    for (let col = 0; col < 8; col++) {
+                        const square = chessboard.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                        rowStr += square ? square.textContent : '.';
+                    }
+                    console.log(`${row}: ${rowStr}`);
+                }
+            }
+        }, 50);
     }
 
     renderBoard() {
@@ -798,10 +814,11 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         console.log('=== renderBoard 호출됨 ===');
         console.log('현재 보드 상태:', this.board);
         
+        // 온라인 모드에서는 스로틀링을 비활성화하여 즉시 렌더링
         const now = Date.now();
-        if (now - this.lastRenderTime < this.renderThrottle) {
+        if (this.gameMode !== 'online-player' && now - this.lastRenderTime < this.renderThrottle) {
             console.log('렌더링 스로틀링으로 인해 건너뜀');
-            return; // 렌더링 스로틀링
+            return; // 렌더링 스로틀링 (온라인 모드가 아닐 때만)
         }
         this.lastRenderTime = now;
 
@@ -3794,7 +3811,15 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 break;
             case 'moveUpdate':
                 // 서버 상태를 완전히 신뢰하고 적용
+                console.log('=== moveUpdate 메시지 처리 시작 ===');
+                console.log('받은 data.gameState:', data.gameState);
+                console.log('받은 data.lastMove:', data.lastMove);
+                console.log('현재 this.board (적용 전):', this.board);
+                console.log('현재 this.currentPlayer (적용 전):', this.currentPlayer);
+                
                 this.loadGameState(data.gameState);
+                
+                console.log('=== moveUpdate 메시지 처리 완료 ===');
                 break;
             case 'gameOver':
                 this.endGame(data.result, data.winner, data.loser);
@@ -5384,34 +5409,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         return board.map(row => row.join('')).join('') + color;
     }
 
-    // 성능 최적화된 렌더링
-    renderBoard() {
-        const now = Date.now();
-        if (now - this.lastRenderTime < this.renderThrottle) {
-            return; // 렌더링 스로틀링
-        }
-        this.lastRenderTime = now;
 
-        const chessboard = document.getElementById('chessboard');
-        if (!chessboard) return;
-
-        let html = '';
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                const piece = this.board[row][col];
-                const isLight = (row + col) % 2 === 0;
-                const squareClass = `square ${isLight ? 'white' : 'black'}`;
-                const pieceClass = piece ? 'piece' : '';
-                const selectedClass = this.selectedPiece && 
-                    this.selectedPiece.row === row && 
-                    this.selectedPiece.col === col ? 'selected' : '';
-                
-                html += `<div class="${squareClass} ${pieceClass} ${selectedClass}" data-row="${row}" data-col="${col}">${piece}</div>`;
-            }
-        }
-        
-        chessboard.innerHTML = html;
-    }
 }
 
 // 게임 초기화
