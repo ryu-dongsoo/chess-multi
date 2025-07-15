@@ -656,17 +656,43 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
 
     loadGameState(gameState) {
         console.log('=== loadGameState 호출됨 ===');
+        
+        // 입력 검증
+        if (!gameState) {
+            console.error('gameState가 null 또는 undefined입니다');
+            return;
+        }
+        
         console.log('서버에서 받은 gameState:', gameState);
+        console.log('gameState.board:', gameState.board);
+        console.log('gameState.currentPlayer:', gameState.currentPlayer);
+        console.log('gameState.moveHistory:', gameState.moveHistory);
         
         try {
             // 서버에서 받은 상태를 완전히 신뢰하고 반영
             console.log('보드 상태 업데이트 시작...');
-            this.board = gameState.board.map(row => [...row]);
+            
+            if (!Array.isArray(gameState.board)) {
+                console.error('gameState.board가 배열이 아닙니다:', gameState.board);
+                return;
+            }
+            
+            this.board = gameState.board.map(row => {
+                if (!Array.isArray(row)) {
+                    console.error('board의 행이 배열이 아닙니다:', row);
+                    return new Array(8).fill('');
+                }
+                return [...row];
+            });
             console.log('보드 상태 업데이트 완료:', this.board);
             
             console.log('현재 플레이어 업데이트 시작...');
-            this.currentPlayer = gameState.currentPlayer;
-            console.log('현재 플레이어 업데이트 완료:', this.currentPlayer);
+            if (gameState.currentPlayer) {
+                this.currentPlayer = gameState.currentPlayer;
+                console.log('현재 플레이어 업데이트 완료:', this.currentPlayer);
+            } else {
+                console.error('gameState.currentPlayer가 없습니다');
+            }
             
             console.log('이동 기록 업데이트 시작...');
             this.moveHistory = Array.isArray(gameState.moveHistory) ? [...gameState.moveHistory] : [];
@@ -690,6 +716,7 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
             console.log('=== loadGameState 완료 ===');
         } catch (error) {
             console.error('loadGameState 내부 오류:', error);
+            console.error('오류 스택:', error.stack);
             throw error;
         }
     }
