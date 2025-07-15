@@ -664,29 +664,19 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         }
         
         console.log('서버에서 받은 gameState:', gameState);
-        console.log('gameState.board:', gameState.board);
-        console.log('gameState.currentPlayer:', gameState.currentPlayer);
-        console.log('gameState.moveHistory:', gameState.moveHistory);
         
         try {
-            // 서버에서 받은 상태를 완전히 신뢰하고 반영
-            console.log('보드 상태 업데이트 시작...');
-            
-            if (!Array.isArray(gameState.board)) {
-                console.error('gameState.board가 배열이 아닙니다:', gameState.board);
-                return;
+            // 1. 보드 상태 업데이트
+            console.log('1. 보드 상태 업데이트 시작...');
+            if (gameState.board && Array.isArray(gameState.board)) {
+                this.board = gameState.board.map(row => Array.isArray(row) ? [...row] : new Array(8).fill(''));
+                console.log('보드 상태 업데이트 완료:', this.board);
+            } else {
+                console.error('gameState.board가 유효하지 않습니다:', gameState.board);
             }
             
-            this.board = gameState.board.map(row => {
-                if (!Array.isArray(row)) {
-                    console.error('board의 행이 배열이 아닙니다:', row);
-                    return new Array(8).fill('');
-                }
-                return [...row];
-            });
-            console.log('보드 상태 업데이트 완료:', this.board);
-            
-            console.log('현재 플레이어 업데이트 시작...');
+            // 2. 현재 플레이어 업데이트
+            console.log('2. 현재 플레이어 업데이트 시작...');
             if (gameState.currentPlayer) {
                 this.currentPlayer = gameState.currentPlayer;
                 console.log('현재 플레이어 업데이트 완료:', this.currentPlayer);
@@ -694,17 +684,13 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
                 console.error('gameState.currentPlayer가 없습니다');
             }
             
-            console.log('이동 기록 업데이트 시작...');
+            // 3. 이동 기록 업데이트
+            console.log('3. 이동 기록 업데이트 시작...');
             this.moveHistory = Array.isArray(gameState.moveHistory) ? [...gameState.moveHistory] : [];
             console.log('이동 기록 업데이트 완료:', this.moveHistory);
             
-            console.log('상태 로드 완료:');
-            console.log('보드:', this.board);
-            console.log('현재 플레이어:', this.currentPlayer);
-            console.log('내 색상:', this.playerColor);
-            
-            // UI 및 상태 갱신
-            console.log('UI 업데이트 시작...');
+            // 4. UI 업데이트
+            console.log('4. UI 업데이트 시작...');
             this.forceRenderBoard();
             this.updateGameStatus();
             this.updateMoveHistory();
@@ -717,7 +703,6 @@ if (colDiff === 1 && rowDiff === direction && targetPiece) {
         } catch (error) {
             console.error('loadGameState 내부 오류:', error);
             console.error('오류 스택:', error.stack);
-            throw error;
         }
     }
 
